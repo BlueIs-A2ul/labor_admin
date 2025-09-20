@@ -12,6 +12,14 @@ export default defineConfigWithVueTs(
   {
     name: 'app/files-to-lint',
     files: ['**/*.{ts,mts,tsx,vue}'],
+    rules: {
+      'vue/multi-word-component-names': [
+        'error',
+        {
+          ignores: ['index'], // 忽略名为 index 的组件
+        },
+      ],
+    },
   },
 
   globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
