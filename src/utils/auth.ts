@@ -7,7 +7,8 @@ export function getToken(): string | undefined {
 }
 
 export function setToken(token: string): string | undefined {
-  return Cookies.set(TokenKey, token)
+  // 设置cookie过期时间为7天，这样刷新页面后token也不会丢失
+  return Cookies.set(TokenKey, token, { expires: 7 })
 }
 
 export function removeToken(): void {

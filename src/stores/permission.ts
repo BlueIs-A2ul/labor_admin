@@ -21,10 +21,8 @@ import { ElMessage } from 'element-plus'
 
 export const usePermissionStore = defineStore('permission', () => {
   const hasPermission = (roles: string[], route: RouteRecordRaw) => {
-    if (route.meta && route.meta.roles) {
-      return roles.some((v) => route.meta.roles.indexOf(v) >= 0)
-    }
-    return true
+    if (!route.meta?.roles) return true
+    return roles.some((role) => route.meta.roles.includes(role))
   }
 
   const routes = ref<RouteRecordRaw[]>([])
