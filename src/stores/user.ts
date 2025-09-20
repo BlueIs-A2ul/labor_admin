@@ -84,6 +84,7 @@ export const useUserStore = defineStore('user', () => {
         }
       })
       roles.value = JSON.parse(JSON.stringify(roleList))
+      return roleList
     } catch (error) {
       throw error
     }

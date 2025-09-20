@@ -21,15 +21,8 @@
         </div>
 
         <div>
-          <el-form
-            ref="loginFormRef"
-            :model="loginForm"
-            status-icon
-            :rules="loginRules"
-            class="login-form"
-            label-width="auto"
-            label-position="left"
-          >
+          <el-form ref="loginFormRef" :model="loginForm" status-icon :rules="loginRules" class="login-form"
+            label-width="auto" label-position="left">
             <div class="title-container">
               <h3 class="title">登录</h3>
             </div>
@@ -37,34 +30,20 @@
               <span class="svg-container">
                 <User style="color: white; font-size: 20px" />
               </span>
-              <el-input
-                :model="loginForm.username"
-                placeholder="请输入用户名"
-                type="text"
-                tabindex="1"
-              />
+              <el-input v-model="loginForm.username" placeholder="请输入用户名" type="text" tabindex="1" />
             </el-form-item>
 
             <el-form-item prop="password">
               <span class="svg-container">
                 <Lock style="color: white; font-size: 20px" />
               </span>
-              <el-input
-                :model="loginForm.password"
-                type="password"
-                show-password
-                autocomplete="off"
-                placeholder="请输入密码"
-                tabindex="2"
-              />
+              <el-input v-model="loginForm.password" type="password" show-password autocomplete="off"
+                placeholder="请输入密码" tabindex="2" />
             </el-form-item>
 
             <el-form-item>
-              <el-button
-                type="primary"
-                @click="handleLogin"
-                style="width: 100%; display: flex; justify-content: center; letter-spacing: 5px"
-              >
+              <el-button type="primary" @click="handleLogin"
+                style="width: 100%; display: flex; justify-content: center; letter-spacing: 5px">
                 登录
               </el-button>
             </el-form-item>
@@ -77,6 +56,7 @@
 
 <script setup lang="ts">
 // 组件逻辑
+// TODO 登录页面样式
 import { reactive } from 'vue'
 import { validUsername } from '@/utils/validate'
 import { Lock, User } from '@element-plus/icons-vue'
@@ -132,7 +112,10 @@ const handleLogin = async () => {
     const res = await userStore.userLogin(loginForm)
     if (res) {
       console.log(res)
-      router.push('/Dashboard')
+      // 先获取用户信息和权限，再进行路由跳转
+      await userStore.fetchUserInfo()
+      // 修正路径大小写，使用小写的dashboard
+      router.push('/dashboard')
     }
   } catch (err) {
     ElMessage.error(err as string)
@@ -192,6 +175,7 @@ $input_bg: rgba(255, 255, 255, 0.9); // 输入框背景改为不透明的白色
 $bg: #2d3a4b;
 $dark_gray: #889aa4;
 $light_gray: #eee;
+
 video {
   z-index: -10;
   position: fixed;
@@ -199,6 +183,7 @@ video {
   top: 50%;
   transform: translate(-50%, -50%);
 }
+
 .bg {
   width: 100%;
   height: 100vh;
@@ -209,6 +194,7 @@ video {
   min-width: 100%;
   min-height: 100%;
   overflow: hidden;
+
   .mask {
     width: 100%;
     height: 100vh;
@@ -220,12 +206,14 @@ video {
     min-height: 100%;
     backdrop-filter: blur(20px);
   }
+
   .maskVideo {
     z-index: -10;
     min-width: 100%;
     min-height: 100%;
   }
 }
+
 /*   @media (min-aspect-ratio: 16/9){
       video{
         width: 100%;
@@ -264,6 +252,7 @@ video {
     border-radius: 30px;
     border: solid 3px rgba(246, 241, 241, 0);
     transition: all 0.2s ease;
+
     &:hover {
       border: solid 3px rgba(246, 241, 241, 0.87);
     }
@@ -311,6 +300,7 @@ video {
     user-select: none;
   }
 }
+
 .mainArea {
   position: fixed;
   left: 50%;
@@ -321,6 +311,7 @@ video {
   border-radius: 30px;
   box-shadow: 0 0 30px rgba(188, 187, 187, 0.2);
   overflow: hidden;
+
   video {
     z-index: 10;
   }
@@ -339,25 +330,30 @@ video {
   align-items: center;
   min-width: 90%;
 }
+
 .info {
   color: white;
   font-weight: 900;
   height: 100%;
+
   ul {
     margin: 0;
     padding: 0;
     list-style: none;
+
     li:first-child {
       font-size: 4em;
       letter-spacing: 5px;
       position: relative;
       top: -21vh;
     }
+
     li:nth-child(2),
     li:nth-child(3) {
       font-size: 2em;
     }
   }
+
   ul:hover {
     cursor: default;
   }
