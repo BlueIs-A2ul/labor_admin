@@ -4,16 +4,15 @@ import { useUserStore } from '@/stores/user'
 import { getToken } from '@/utils/auth'
 import router from '@/router'
 
-const userStore = useUserStore()
-
 const service = axios.create({
-  baseURL: import.meta.env.VUE_APP_BASE_API,
+  baseURL: import.meta.env.VITE_VUE_APP_BASE_API,
   timeout: 20 * 1000,
 })
 
 // 请求拦截器
 service.interceptors.request.use(
   (config) => {
+    const userStore = useUserStore()
     if (userStore.token) {
       config.headers['swpu_token'] = getToken()
     }
@@ -28,6 +27,8 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response) => {
+    const userStore = useUserStore()
+
     if (response.config.responseType === 'blob') {
       return response
     }
