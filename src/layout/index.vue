@@ -1,6 +1,6 @@
 <template>
   <div :class="classObj" class="app-wrapper">
-    <div v-if="device === 'mobile' && sidebar.opened" class="drawer-bg" @click="handleClickOutside" />
+    <div v-if="device === 'mobile' && sidebarState.opened" class="drawer-bg" @click="handleClickOutside" />
     <sidebar class="sidebar-container" />
     <div class="main-container">
       <div :class="{ 'fixed-header': fixedHeader }">
@@ -26,9 +26,9 @@ const classObj = computed(() => ({
   withoutAnimation: appStore.sidebar.withoutAnimation,
 }))
 
-
 const device = computed(() => appStore.device)
-const sidebar = computed(() => appStore.sidebar)
+//!不要使用sidebar命名，会和组件的命名冲突
+const sidebarState = computed(() => appStore.sidebar)
 const fixedHeader = computed(() => settingsStore.fixedHeader)
 
 const handleClickOutside = () => {

@@ -62,9 +62,11 @@ import { validUsername } from '@/utils/validate'
 import { Lock, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import { usePermissionStore } from '@/stores/permission'
 import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
+const permissionStore = usePermissionStore()
 const router = useRouter()
 
 const loginForm = reactive({
@@ -111,10 +113,9 @@ const handleLogin = async () => {
   try {
     const res = await userStore.userLogin(loginForm)
     if (res) {
-      console.log(res)
       // 先获取用户信息和权限，再进行路由跳转
-      await userStore.fetchUserInfo()
-      // 修正路径大小写，使用小写的dashboard
+      const roles = await userStore.fetchUserInfo()
+      await permissionStore.generateRoutes(roles)
       router.push('/dashboard')
     }
   } catch (err) {

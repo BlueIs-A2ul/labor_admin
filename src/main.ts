@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import registerSvgIcon from './icons/index'
 
 import '@/styles/index.scss'
 import App from './App.vue'
@@ -10,6 +11,7 @@ import '@/permissions'
 
 const pinia = createPinia()
 const app = createApp(App)
+registerSvgIcon(app)
 pinia.use(piniaPluginPersistedstate)
 
 app.use(router)

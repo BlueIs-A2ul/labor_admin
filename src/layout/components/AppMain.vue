@@ -3,7 +3,6 @@
     <transition name="fade-transform" mode="out-in">
       <keep-alive :include="cacheRoute" :exclude="noCacheRoutes">
         <router-view :key="key" />
-        <!-- <router-view  :include="cachedViews" /> -->
       </keep-alive>
     </transition>
   </section>
@@ -12,7 +11,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
-
 
 const route = useRoute()
 

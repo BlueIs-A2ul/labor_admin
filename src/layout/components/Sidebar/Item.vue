@@ -1,17 +1,17 @@
 <template>
-  <!-- 渲染图标 -->
-  <template v-if="icon">
-    <i v-if="isElIcon" :class="[icon, 'sub-el-icon']" />
-    <svg-icon v-else :icon-class="icon" />
-  </template>
+  <div v-if="icon.includes('el-icon')">
+    <i :class="['sub-el-icon', icon]" />
+  </div>
+  <div v-else>
+    <svg-icon :icon-class="icon" />
+  </div>
 
-  <!-- 渲染标题 -->
-  <span v-if="title" slot="title">{{ title }}</span>
+  <span v-if="title">{{ title }}</span>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import SvgIcon from '@/components/SvgIcon/index.vue'
+import SvgIcon from '@/components/SvgIcon/SvgIcon.vue'
 
 // 定义组件的props
 const props = defineProps({
@@ -25,8 +25,8 @@ const props = defineProps({
   }
 })
 
-// 计算属性：是否为Element UI图标
-const isElIcon = computed(() => props.icon && props.icon.includes('el-icon'))
+const isElIcon = computed(() =>
+  props.icon && (props.icon.includes('el-icon') || props.icon.includes('element')))
 </script>
 
 <style scoped>

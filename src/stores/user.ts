@@ -44,7 +44,6 @@ export const useUserStore = defineStore(
         })
         const { data } = response
         token.value = data
-        console.log(data)
         setToken(data)
         return response
       } catch (error) {

@@ -10,11 +10,11 @@ import { isExternal } from '@/utils/validate'
 import { computed } from 'vue'
 
 const props = defineProps({
-  ['iconClass']: {
+  iconClass: {
     type: String,
     required: true
   },
-  ['className']: {
+  className: {
     type: String,
     default: ''
   }

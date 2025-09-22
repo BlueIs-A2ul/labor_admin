@@ -9,13 +9,13 @@
       </AppLink>
     </template>
 
-    <el-submenu v-else ref="subMenu" :index="resolvePath(item.path)" popper-append-to-body>
+    <el-sub-menu v-else ref="subMenu" :index="resolvePath(item.path)" popper-append-to-body>
       <template #title>
         <Item v-if="item.meta" :icon="item.meta && item.meta.icon" :title="item.meta.title" />
       </template>
       <SidebarItem v-for="child in item.children" :key="child.path" :is-nest="true" :item="child"
         :base-path="resolvePath(child.path)" class="nest-menu" />
-    </el-submenu>
+    </el-sub-menu>
   </div>
 </template>
 
@@ -23,6 +23,7 @@
 import { ref } from 'vue'
 import Item from './Item.vue'
 import AppLink from './Link.vue'
+import SvgIcon from '@/components/SvgIcon/SvgIcon.vue'
 
 import { isExternal } from '@/utils/validate'
 
@@ -43,17 +44,23 @@ const props = defineProps({
 
 const onlyOneChild = ref<any>(null)
 
-const hasOneShowingChild = (children: MenuItem[], parent: MenuItem) => {
-  const ShowingChildren = children.filter(item => {
+// 修复 hasOneShowingChild 函数
+const hasOneShowingChild = (children: MenuItem[] | undefined, parent: MenuItem) => {
+  // 添加空值检查，如果 children 不存在，默认为空数组
+  const validChildren = children || [];
+
+  const ShowingChildren = validChildren.filter(item => {
     if (item.hidden) {
-      return false
+      return false;
     } else {
-      onlyOneChild.value = item
+      onlyOneChild.value = item;
+      // 修复 filter 回调函数，确保返回布尔值
+      return true;
     }
-  })
+  });
 
   if (ShowingChildren.length === 1) {
-    return true
+    return true;
   }
 
   if (ShowingChildren.length === 0) {
@@ -61,12 +68,12 @@ const hasOneShowingChild = (children: MenuItem[], parent: MenuItem) => {
       ...parent,
       path: '',
       noShowingChildren: true,
-    }
-    return true
+    };
+    return true;
   }
 
-  return false
-}
+  return false;
+};
 
 const resolvePath = (routePath: string) => {
   if (isExternal(routePath)) {
