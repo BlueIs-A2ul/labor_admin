@@ -1,4 +1,3 @@
-// 将 CommonJS 的 module.exports 替换为 ES 模块的 export default
 export default {
   title: '劳动教育二课管理平台',
 
