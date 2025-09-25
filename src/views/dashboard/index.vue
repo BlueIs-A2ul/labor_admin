@@ -1,5 +1,6 @@
 <template>
-  <div id="pageContainer" v-loading="globalLoad" class="dashboard-container">
+  <!-- TODO v-loading="globalLoad" -->
+  <div id="pageContainer" class="dashboard-container">
     <el-row :gutter="20">
       <el-col :span="18">
         <div class="grid-content bg-purple baseInfoBox">
@@ -40,7 +41,7 @@
             选择范围:
             <el-date-picker v-model="CDCTimeRange" size="small" :disabled="CDCPickDisabled" type="daterange"
               align="right" unlink-panels :first-day-of-week="1" range-separator="至" start-placeholder="开始日期"
-              end-placeholder="结束日期" format="yyyy年MM月dd日" value-format="yyyy-MM-dd" :picker-options="CDCPickOptions"
+              end-placeholder="结束日期" format="yyyy年MM月dd日" value-format="yyyy-MM-dd" :shortcuts="shortcutsOptions"
               @change="handleCDCPickChange" />
           </div>
           <div id="interval">
@@ -186,29 +187,408 @@
 </template>
 
 <script setup lang="ts">
-// 组件逻辑
+import * as echarts from 'echarts'
+import { useSemesterStore } from '@/stores/semester'
+import { useDepartmentStore } from '@/stores/department'
+import { useUserStore } from '@/stores/user'
+import { ElMessage } from 'element-plus'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { getAllSemesters } from '@/apis/semesterAndObjectives/semester'
+import * as rqChart from '@/apis/chartsData/chartsData'
+import type { DepartmentListType } from '@/types/apis/department'
+import { guidePage } from './firstLogin'
+import router from '@/router'
+
+const semesterStore = useSemesterStore()
+const departmentStore = useDepartmentStore()
+const userStore = useUserStore()
+
+const semesterName = computed(() => semesterStore.semesterName)
+const semesterId = computed(() => semesterStore.id)
+const departmentId = computed(() => userStore.departmentId)
+const chosenSemester = ref(semesterName.value)
+const semesterList = ref<SemesterGroup[]>([])
+
+const departmentList = ref<DepartmentListType[]>([])
+
+const baseInfoData = reactive([
+  {
+    key: "学生",
+    value: 0,
+    className: "stuCard",
+    icon: "el-icon-s-promotion",
+    bg: "iconfont icon-xuesheng",
+  },
+  {
+    key: "参加课程人次",
+    value: 0,
+    className: "userCountCard",
+    icon: "el-icon-s-promotion",
+    bg: "iconfont icon-xuesheng",
+  },
+  {
+    key: "本学期课程",
+    value: 0,
+    className: "courseCard",
+    icon: "el-icon-s-order",
+    bg: "iconfont icon-maisui",
+  },
+  {
+    key: "后台教师",
+    value: 0,
+    className: "userCard",
+    icon: "el-icon-s-custom",
+    bg: "iconfont icon-jiaoshi_dashuju",
+  },
+])
+
+const loadList = async () => {
+  if (!departmentList.value.length) {
+    departmentList.value = await departmentStore.init() as DepartmentListType[]
+    console.log('departmentList.value', departmentList.value)
+  }
+}
+
+const getSemesterList = async () => {
+  try {
+    const res = await getAllSemesters()
+    if (res.code === 200) {
+      const { data } = res
+      const currentSemesterId = semesterId.value || ''
+      const currentSemesterName = semesterName.value || ''
+      semesterList.value.push({
+        label: "当前学期",
+        options: [{ value: currentSemesterId, label: currentSemesterName }],
+      })
+      const index = data.findIndex((item: {
+        id: string
+      }) => item.id === semesterId.value)
+      data.splice(index, 1)
+
+      if (data.length) {
+        const others = data.map((item: {
+          id: string
+          semesterName: string
+        }) => {
+          return {
+            value: item.id,
+            label: item.semesterName,
+          }
+        })
+        semesterList.value.push({
+          label: "当前学期",
+          options: others,
+        })
+      }
+    } else {
+      ElMessage.error('获取学期列表失败')
+    }
+  }
+  catch (error) {
+    ElMessage.error(error as string)
+  }
+}
+
+const getBaseInfo = async () => {
+  try {
+    const res = await rqChart.getTotalData()
+    if (res.code === 200) {
+      const { data } = res
+      Object.values(data).forEach((v, index) => {
+        if (typeof v === 'string') {
+          baseInfoData[index].value = Number(v)
+        }
+      })
+    }
+  }
+  catch (error) {
+    ElMessage.error(error as string)
+  }
+}
+
+const chooseNewSemester = async (value: string) => {
+  if (value !== semesterId.value) {
+    semesterStore.id = value
+    loadList()
+  }
+}
+
+const CDCTimeRange = ref([])
+const CDCPickDisabled = ref<boolean>(false)
+const isInterval = ref<boolean>(false)
+const CCChartLoading = ref<boolean>(false)
+const courseDataChart = ref()
+const courseCountChart = ref()
+const courseRange = reactive({
+  start: '',
+  end: '',
+  timeFormat: "yyyy-MM-dd",
+})
+
+const disabledDateFunction = (time: Date) => {
+  // 禁用今天的日期之后的所有日期
+  return time.getTime() > Date.now()
+}
+
+const shortcutsOptions = [
+  {
+    text: '默认',
+    value: () => {
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 15)
+      return [start, new Date()]
+    }
+
+  },
+  {
+    text: '最近一周',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 7)
+      return [start, end]
+    }
+  },
+  {
+    text: '最近一个月',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 30)
+      return [start, end]
+    }
+  }
+]
+
+const initCourseData = async () => {
+  CCChartLoading.value = true
+  try {
+    const res = await rqChart.getChartDailyCourse(
+      courseRange.start,
+      courseRange.end,
+      null,
+      courseRange.timeFormat,
+      departmentId.value as unknown as number,
+    )
+    if (res.code === 200) {
+      const { data } = res as unknown as { data: CourseData }
+      console.log('data', data)
+      let courseDataX = data.dataX
+      let courseDataY = data.dataY
+
+      if (!courseDataChart.value) {
+        // 初始化图表实例
+        courseDataChart.value = echarts.init(courseCountChart.value)
+      }
+
+      if (isInterval.value && courseRange.timeFormat === "yyyy-MM-dd") {
+        courseDataX = courseDataX.filter((_, index) => {
+          return index % 2 === 0
+        })
+        courseDataY = courseDataY.filter((_, index) => {
+          return index % 2 === 0
+        })
+      } else if (isInterval.value && courseRange.timeFormat === "yyyy-MM") {
+        ElMessage({
+          message: "请选择月数据",
+          type: 'error',
+          duration: 3000,
+        })
+      }
+
+      const CDChartOptions = getCDCOptions(courseDataX, courseDataY)
+      courseDataChart.value.setOption(CDChartOptions)
+    }
+  }
+  catch (error) {
+    ElMessage.error(error as string)
+  }
+}
+
+const toCourseCount = () => {
+  if (!departmentList.value.length) {
+    loadList()
+  }
+  router.push({
+    path: "/chartInfo/courseCount",
+    query: {
+      // TODO 获取部门列表
+      departmentList: departmentList,
+      departmentId: departmentId,
+    }
+  })
+}
+
+
+onMounted(async () => {
+  await getSemesterList()
+  await getBaseInfo()
+  await initCourseData()
+  loadList()
+  if (!localStorage.getItem("firstLogin")) {
+    guidePage();
+  }
+})
+
+
+interface SemesterOption {
+  value: string;
+  label: string;
+}
+
+interface SemesterGroup {
+  label: string;
+  options: SemesterOption[];
+}
+
+interface CourseData {
+  dataX: string[]
+  dataY: string[]
+  total: string
+}
+
+const getCDCOptions = (dataX: string[], dataY: string[]) => {
+  return {
+    grid: {
+      top: "25%",
+      right: "5%",
+      left: "5%",
+      bottom: "10%",
+    },
+    center: ["50%", "50%"],
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        type: "none", // none
+      },
+      extraCssText: "background:#ffffff;color:#666666",
+      borderColor: "#7debc0",
+      borderWidth: 1,
+    },
+    legend: {
+      type: "scroll",
+      right: "5%",
+      top: "7%",
+      data: ["当日发布课程数", "走势"], // ["当日发布课程数", "走势"]
+      itemGap: 25,
+      itemWidth: 16,
+      itemHeight: 16,
+      textStyle: {
+        fontSize: "13",
+        color: "#666666",
+      },
+    },
+    xAxis: [
+      {
+        data: dataX,
+        axisLabel: {
+          interval: 0,
+          margin: 10,
+          color: "rgba(0,0,0,0.45)",
+          textStyle: {
+            fontSize: 12,
+          },
+        },
+        axisLine: {
+          lineStyle: {
+            color: "#0FBA77",
+          },
+        },
+        axisTick: {
+          show: false,
+        },
+      },
+    ],
+    yAxis: [
+      {
+        name: "课程数", // 课程
+        nameTextStyle: {
+          color: "rgba(0,0,0,0.45)",
+          fontSize: 13,
+          padding: [20, 20, 0, 0],
+        },
+        axisLabel: {
+          color: "rgba(0,0,0,0.45)",
+          textStyle: {
+            fontSize: 12,
+          },
+        },
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: "#5A75FF",
+          },
+        },
+        axisTick: {
+          show: false,
+        },
+        splitLine: {
+          lineStyle: {
+            color: "#0FBA77",
+            opacity: 0.2,
+          },
+        },
+      },
+    ],
+    animation: false,
+    series: [
+      {
+        name: "当日发布课程数", // 课程数
+        type: "bar",
+        data: dataY,
+        barWidth: "32px",
+        itemStyle: {
+          normal: {
+            color: "#0FBA77",
+            barBorderRadius: [100, 100, 0, 0],
+          },
+        },
+      },
+      {
+        name: "走势",
+        type: "line",
+        data: dataY,
+        symbolSize: 16,
+        lineStyle: {
+          normal: {
+            width: 4,
+            color: "rgba(247,150,0,1)",
+            shadowColor: "rgba(247,150,0,0.38)",
+            shadowBlur: 6,
+            shadowOffsetY: 8,
+          },
+        },
+        itemStyle: {
+          normal: {
+            color: "rgba(247,150,0,1)",
+            borderColor: "rgba(247,150,0,1)",
+            borderWidth: 4,
+          },
+        },
+      },
+    ],
+  };
+}
 </script>
 
 <style lang="scss" scoped>
-::v-deep {
-  .myStatistic {
-    flex: 1;
+:deep(.myStatistic) {
+  flex: 1;
 
-    .el-statistic {
-      .head {
-        margin-bottom: 13px;
-        color: #ffffff;
-        font-size: 16px;
-        font-weight: bold;
-        letter-spacing: 2px;
-      }
+  .el-statistic {
+    .el-statistic__head {
+      margin-bottom: 13px;
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
 
-      .con .number {
-        font-size: 21px;
-        color: white;
-        padding: 0 4px;
-        font-weight: normal;
-      }
+    .el-statistic__number {
+      font-size: 21px;
+      color: white;
+      padding: 0 4px;
+      font-weight: normal;
     }
   }
 }

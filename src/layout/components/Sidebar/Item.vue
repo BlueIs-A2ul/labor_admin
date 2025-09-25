@@ -1,6 +1,8 @@
 <template>
   <div v-if="icon.includes('el-icon')">
-    <i :class="['sub-el-icon', icon]" />
+    <el-icon>
+      <component :is="iconName" />
+    </el-icon>
   </div>
   <div v-else>
     <svg-icon :icon-class="icon" />
@@ -25,14 +27,21 @@ const props = defineProps({
   }
 })
 
-const isElIcon = computed(() =>
-  props.icon && (props.icon.includes('el-icon') || props.icon.includes('element')))
+// 计算图标组件
+const iconName = computed(() => {
+  if (props.icon && props.icon.includes('el-icon')) {
+    // 移除前缀并转换为 PascalCase 格式
+    const name = props.icon.replace('el-icon-', '')
+    return name.charAt(0).toUpperCase() + name.slice(1)
+  }
+  return null
+})
 </script>
 
 <style scoped>
-.sub-el-icon {
-  color: currentColor;
+.el-icon {
   width: 1em;
   height: 1em;
+  color: currentColor;
 }
 </style>

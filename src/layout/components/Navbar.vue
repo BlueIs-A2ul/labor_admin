@@ -52,6 +52,7 @@ const logout = async () => {
 
 const toggleSideBar = () => {
   appStore.toggleSideBar()
+  console.log(sidebar.value.opened)
 }
 
 const sidebar = computed(() => appStore.sidebar)
@@ -64,7 +65,7 @@ const avatar = computed(() => userStore.avatar)
   height: 50px;
   overflow: hidden;
   position: relative;
-  background: #fff;
+  background: #ffffff;
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
 
   .hamburger-container {

@@ -1,7 +1,6 @@
 @import './variables.scss';
 @import './mixin.scss';
 @import './transition.scss';
-@import './element-ui.scss';
 @import './sidebar.scss';
 
 body {
@@ -9,7 +8,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
+  font-family:
+    Helvetica Neue,
+    Helvetica,
+    PingFang SC,
+    Hiragino Sans GB,
+    Microsoft YaHei,
+    Arial,
+    sans-serif;
 }
 
 label {
@@ -53,7 +59,7 @@ div:focus {
     visibility: hidden;
     display: block;
     font-size: 0;
-    content: " ";
+    content: ' ';
     clear: both;
     height: 0;
   }
@@ -65,7 +71,7 @@ div:focus {
 }
 
 // 评价模板中中, 待插入词汇区域的样式
-.templateBtn{
+.templateBtn {
   width: fit-content;
   height: fit-content;
   padding: 4px 5px;
@@ -79,7 +85,7 @@ div:focus {
   border-radius: 5px;
   margin: 0 3px;
   font-size: 12px;
-  &:hover{
+  &:hover {
     cursor: pointer;
   }
 }

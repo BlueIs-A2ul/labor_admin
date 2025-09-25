@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import registerSvgIcon from './icons/index'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 import '@/styles/index.scss'
 import App from './App.vue'
@@ -16,5 +17,9 @@ pinia.use(piniaPluginPersistedstate)
 
 app.use(router)
 app.use(pinia)
+
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
 
 app.mount('#app')

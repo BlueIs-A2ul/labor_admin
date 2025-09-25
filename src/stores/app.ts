@@ -1,14 +1,14 @@
 import Cookies from 'js-cookie'
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 
 export const useAppStore = defineStore('app', () => {
   // 将Cookies.get结果存储在变量中避免重复调用
   const sidebarStatus = Cookies.get('sidebarStatus')
-  const sidebar = {
+  const sidebar = reactive({
     opened: sidebarStatus ? !!+sidebarStatus : true,
     withoutAnimation: false,
-  }
+  })
   const device = ref('desktop')
 
   const toggleSideBar = () => {

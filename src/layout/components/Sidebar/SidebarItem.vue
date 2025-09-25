@@ -23,7 +23,6 @@
 import { ref } from 'vue'
 import Item from './Item.vue'
 import AppLink from './Link.vue'
-import SvgIcon from '@/components/SvgIcon/SvgIcon.vue'
 
 import { isExternal } from '@/utils/validate'
 
