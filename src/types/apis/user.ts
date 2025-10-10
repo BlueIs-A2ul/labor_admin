@@ -11,6 +11,14 @@ export interface PageParams {
   withRole?: boolean
 }
 
+export interface SimpleUserModel {
+  avatar: string
+  departmentName: string
+  name: string
+  score: string
+  studentId: string
+}
+
 export interface UserModel {
   gmtCreate: string | null
   gmtModified: string | null

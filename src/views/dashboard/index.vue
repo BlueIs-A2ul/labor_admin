@@ -153,14 +153,14 @@
           课程分类统计
           <button class="moreBtn" @click="toCategoryChart">更多>></button>
         </div>
-        <div ref="categoryChart" v-loading="categoryLoad" class="grid-content bg-purple card" />
+        <div ref="categoryChartDOM" v-loading="categoryLoad" class="grid-content bg-purple card" />
       </el-col>
       <el-col id="uc" :span="6" class="chartContainer">
         <div class="title">
           参与人次
           <button class="moreBtn" @click="toUserCount">更多>></button>
         </div>
-        <div ref="userCountChart" v-loading="userCountLoad" class="grid-content bg-purple card" />
+        <div ref="userCountChartDOM" v-loading="userCountLoad" class="grid-content bg-purple card" />
       </el-col>
     </el-row>
 
@@ -188,16 +188,22 @@
 
 <script setup lang="ts">
 import * as echarts from 'echarts'
+import 'echarts-wordcloud'
 import { useSemesterStore } from '@/stores/semester'
 import { useDepartmentStore } from '@/stores/department'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, toRaw } from 'vue'
 import { getAllSemesters } from '@/apis/semesterAndObjectives/semester'
 import * as rqChart from '@/apis/chartsData/chartsData'
 import type { DepartmentListType } from '@/types/apis/department'
+import type { SimpleUserModel } from '@/types/apis/user'
 import { guidePage } from './firstLogin'
 import router from '@/router'
+import { calculate } from '@/apis/common'
+import { wordCloudCondition } from '@/apis/word/word'
+import { use } from 'echarts/types/src/extension.js'
+import { ca } from 'element-plus/es/locales.mjs'
 
 const semesterStore = useSemesterStore()
 const departmentStore = useDepartmentStore()
@@ -245,7 +251,6 @@ const baseInfoData = reactive([
 const loadList = async () => {
   if (!departmentList.value.length) {
     departmentList.value = await departmentStore.init() as DepartmentListType[]
-    console.log('departmentList.value', departmentList.value)
   }
 }
 
@@ -253,7 +258,7 @@ const getSemesterList = async () => {
   try {
     const res = await getAllSemesters()
     if (res.code === 200) {
-      const { data } = res
+      const { data } = res as unknown as { data: SemesterDataItem[] }
       const currentSemesterId = semesterId.value || ''
       const currentSemesterName = semesterName.value || ''
       semesterList.value.push({
@@ -372,7 +377,6 @@ const initCourseData = async () => {
     )
     if (res.code === 200) {
       const { data } = res as unknown as { data: CourseData }
-      console.log('data', data)
       let courseDataX = data.dataX
       let courseDataY = data.dataY
 
@@ -405,6 +409,14 @@ const initCourseData = async () => {
   }
 }
 
+const handleCDCPickChange = async (timeRange: string[]) => {
+  CDCPickDisabled.value = true
+  courseRange.start = timeRange[0] === '' ? '' : timeRange[0]
+  courseRange.end = timeRange[1] === '' ? '' : timeRange[1]
+  const days = calculate(courseRange.start, courseRange.end)
+  courseRange.timeFormat = days / 25 > 2 ? 'yyyy-MM' : 'yyyy-MM-dd'
+}
+
 const toCourseCount = () => {
   if (!departmentList.value.length) {
     loadList()
@@ -413,18 +425,412 @@ const toCourseCount = () => {
     path: "/chartInfo/courseCount",
     query: {
       // TODO 获取部门列表
+      departmentList: departmentList.value,
+      departmentId: departmentId.value,
+    }
+  })
+}
+
+const wordList = ref<WordItem[]>([])
+const wordCloudChart = ref()
+const wordCloud = ref()
+const wordCloudColor = ["#1890FF", "#2FC25B", "#41D9C7", "#FACC14", "#9AE65C"]
+
+const toWordCloud = async () => {
+  if (!departmentList.value.length) {
+    await loadList()
+  }
+  const queryDepartmentList = toRaw(departmentList.value)
+  console.log(JSON.stringify(queryDepartmentList))
+  //encodeURI
+  router.push({
+    path: "/chartInfo/wordCloud",
+    query: {
+      departmentList: queryDepartmentList,
+      departmentId: departmentId.value,
+    }
+  })
+}
+
+const toCategoryChart = async () => {
+  if (!departmentList.value.length) {
+    await loadList()
+  }
+  router.push({
+    path: "/chartInfo/categoryChart",
+    query: {
+      departmentList: departmentList,
+    }
+  })
+}
+
+const toUserCount = async () => {
+  if (!departmentList.value.length) {
+    await loadList()
+  }
+  router.push({
+    path: "/chartInfo/userCount",
+    query: {
       departmentList: departmentList,
       departmentId: departmentId,
     }
   })
 }
 
+const openRankList = () => {
+
+}
+
+const getWordCloud = async () => {
+  const res = await wordCloudCondition(
+    null,
+    null,
+    departmentId.value
+  )
+  const { data } = res as unknown as { data: WordItem[] }
+  wordList.value = data
+  await initWordCloud()
+}
+
+const initWordCloud = async () => {
+  if (!wordCloudChart.value) {
+    wordCloudChart.value = echarts.init(wordCloud.value)
+  }
+  const maskImage = new Image()
+  maskImage.src =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEMAAAAwCAYAAABKfMccAAAAAXNSR0IArs4c6QAAA7dJREFUaEPlmlFu4jAQhj0QDrFv9A0p5mFP0OVxT7Fwi31re4O9QelJ2p6BROKtPUgSryayUWLGYew4ECBSpT7Yxv78ezwzHhADfIvFYp4kyVwI8SiE+KWUwv8PHwB8K6W+J5PJ52632w4whaAhIaiXo5OG8EcI8cwdF6EgHAB4uzSYKDA0hFdUARcC1U6D2WRZ9tFnnNC+vWEsl8u1UgpBxPyesyx7iTkgZ6xeMNI0fQWAdccP4Q7j36dlM+ZVVT129UWV5Hn+wFlErDbBMKSU7x3HgrWzeLxmsxkaWLQzR0fs3ECCYEgpnxxGkgWB2knXmAgE1QUA9Y1kDC6qLbZt8YYhpcQdRFW0PgDY9L0NUCnT6fTdLPyU/DWYbVEUb/v9HqH1+rxhpGn6ZU82BgizCl8gDbVs+xpdLxiUlGOCaAJJkuTLd5tRKWVZrkJV4gtDWRP8yLJs5TtpTnu8squqekKHTN9IdTf0ZrUySZ+mDxA2DIc/sYptxDigsE2XtxsKhA2DuEoHUwUXiIFCGd2Qa9kHhn1ELqYKG5YrHPC1ZywY1BEpiuIh1FD57Dy3LXUL+aojGEaWZay+3MXEaOfwgdgKZi2IuFJHYS8cnqwdJrDnyoJhB2RKqW2e55sYuxl7DFsdPkfl5mBoY2o7bKyjcnMwUGl2yMC9VTphuK6sMR8ThEGlF3DOZVm+dN2AJIxTucxrhMEJ6I5gcPKZ1wqjYazJG+YIhiuDZXIHQyRVYt8o5qkCM2iu1CK1oS0YjrOGafzeuYLYC+aOdyKga7kIBxhUcvfSqXvugjntXFn85k1zgCGlbAViPs4KZzJjaEP5IM111jAoVYwtEIsFk4pfjDpqGIQqRutux4Bi20ajDriG8DwGgOYYlDqqqvoJ1xSExYRiu+wkDHwc6ptyjznpocYijsoaldF6B+EGNUNN8lzj2jkaAPgHtvEUQrDC3XNNeqjfsW1lDYN4IbsLGIQy/qIy7DTZXdgM++IAABIGO2c4lITPMa59IpRSv1EZrVf10Neocywg1m9QvlVVVT/A4a/fpwdKxSa3FK3aauqqJKhjE1c01+d5P5akY45DueFHUasO1o5Kk27JfnRUJR5ciUM+Q79VYj1Eq3ovdqlQzJ3mjOVal+7bciNaab+uEiJTaIYlzvp/URRF7zoqzoJ82zRLtTsqEo9cCFd23Kvk2XeyI2hPOpZB7yYjWEzQFE7dkpwXtatXibF7p1ITrLdWU8mrS5znjSKzoB0aupOxafjE4fPO8x/Lmq0SmHlcDQAAAABJRU5ErkJggg==';
+  const wcOptions = {
+    series: [
+      {
+        type: "wordCloud",
+        gridSize: 7,
+        sizeRange: [20, 50],
+        rotationRange: [0, 0],
+        textStyle: {
+          fontFamily: "sans-serif",
+          //TODO 根据出现频次调整字体粗细
+          fontWeight: "bold",
+          color: () => {
+            const r = Math.floor(
+              Math.random() * wordCloudColor.length
+            );
+            return wordCloudColor[r];
+          }
+        },
+        width: "90%",
+        height: "90%",
+        data: wordList.value
+      },
+      0
+    ]
+  }
+  wordCloudChart.value.setOption(wcOptions)
+}
+
+const rankLoad = ref<boolean>(false)
+const rankChart = ref()
+const rkc = ref()
+
+const getRankChart = async () => {
+  rankLoad.value = true
+  try {
+    const res = await rqChart.getRankChart(
+      0, 5, semesterId.value
+    )
+    if (res.code === 200) {
+      const { list } = res.data as unknown as { list: SimpleUserModel[] }
+      const cnt = list.length < 5 ? list.length : 5
+      const rankList = list.splice(0, cnt)
+
+      const dataX = rankList.map(item => item.name)
+      const dataY = rankList.map(item => item.score)
+
+      if (!rankChart.value) {
+        rankChart.value = echarts.init(rkc.value)
+      }
+
+      const rankOptions = getRCOptions(dataX, dataY)
+      rankChart.value.setOption(rankOptions)
+    }
+    rankLoad.value = false
+  }
+  catch (_) {
+    ElMessage.error("网络异常，请稍后再试")
+  }
+}
+
+const getRCOptions = (dataX: string[], dataY: string[]) => {
+  return {
+    backgroundColor: "#ffffff",
+    tooltip: {
+      trigger: "axis",
+      show: true,
+      axisPointer: {
+        // 坐标轴指示器，坐标轴触发有效
+        type: "line", // 默认为直线，可选为：'line' | 'shadow'
+      },
+    },
+    legend: {
+      show: false,
+    },
+    grid: {
+      left: "10%",
+      right: "15%",
+      bottom: "5%",
+      containLabel: true,
+    },
+    xAxis: [
+      {
+        splitLine: {
+          show: false,
+        },
+        type: "value",
+        show: false,
+      },
+    ],
+    yAxis: [
+      {
+        splitLine: {
+          show: false,
+        },
+        axisLine: {
+          // y轴
+          show: false,
+        },
+        type: "category",
+        axisTick: {
+          show: false,
+        },
+        inverse: true,
+        data: dataX,
+        axisLabel: {
+          color: "#303133",
+          fontSize: 14,
+        },
+      },
+    ],
+    series: [
+      {
+        name: "二课积分",
+        type: "bar",
+        barWidth: 8, // 柱子宽度
+        label: {
+          show: true,
+          position: "right", // 位置
+          color: "#303133",
+          fontSize: 14,
+          distance: 15, // 距离
+          formatter: "{c} 分", // 这里是数据展示的时候显示的数据
+        }, // 柱子上方的数值
+        itemStyle: {
+          barBorderRadius: [0, 0, 0, 0], // 圆角（左上、右上、右下、左下）
+          color: "#419fff",
+        },
+        data: dataY,
+      },
+    ],
+  }
+}
+
+const categoryLoad = ref<boolean>(false)
+const categoryChart = ref()
+const categoryChartDOM = ref()
+
+const getCategoryChart = async () => {
+  categoryLoad.value = true
+  try {
+    const res = await rqChart.getChartCourseCategory(
+      departmentId.value,
+      semesterId.value
+    )
+    if (res.code === 200) {
+      const { data } = res as unknown as { data: CategoryChartItem[] }
+      if (!categoryChart.value) {
+        categoryChart.value = echarts.init(categoryChartDOM.value)
+      }
+      const categoryOptions = getCGCOptions(data)
+      categoryChart.value.setOption(categoryOptions)
+    } else {
+      ElMessage.error(res.message)
+    }
+    categoryLoad.value = false
+  }
+  catch (_) {
+    ElMessage.error("网络异常，请稍后再试")
+  }
+}
+
+const getCGCOptions = (data: any[]) => {
+  return {
+    legend: {
+      top: "80%",
+    },
+    center: ["50%", "20%"],
+    color: ["#369DFD", "#32C8CA", "#49C872", "#EE607A", "#3436C7"],
+    toolbox: {
+      show: true,
+    },
+    tooltip: {
+      trigger: "item",
+      formatter: "{a} <br/>{b} : {c}个 ({d}%)",
+    },
+    series: [
+      {
+        name: "课程占比", // 课程占比
+        type: "pie",
+        radius: [25, 85],
+        center: ["50%", "40%"],
+        roseType: "area",
+        itemStyle: {
+          borderRadius: 4,
+        },
+        data: data,
+      },
+    ],
+  };
+}
+
+const userCountLoad = ref<boolean>(false)
+const userCountChart = ref()
+const userCountChartDOM = ref()
+
+const getUserCountChart = async () => {
+  userCountLoad.value = true
+  try {
+    const res = await rqChart.getUserCountChart(
+      null,
+      null,
+      semesterId.value,
+      "yyyy-MM-dd",
+      departmentId.value
+    )
+    if (res.code === 200) {
+      const { data } = res as unknown as { data: CourseData }
+      const time: string[] = data.dataX
+      const numbers = data.dataY
+      if (!userCountChart.value) {
+        userCountChart.value = echarts.init(userCountChartDOM.value)
+      }
+      const userCountOptions = getUCCOptions(time, numbers)
+      userCountChart.value.setOption(userCountOptions)
+    } else {
+      ElMessage.error(res.message)
+    }
+    userCountLoad.value = false
+  }
+  catch (e) {
+    console.log(`获取异常${e}`)
+    ElMessage.error(`获取异常${e}`)
+  }
+}
+
+const sixStandardLoad = ref<boolean>(false)
+const sat = ref()
+const sixStandardChart = ref()
+
+const getSixStandardChart = async () => {
+  sixStandardLoad.value = true
+  try {
+    const res = await rqChart.getSixStandardStatics(
+      departmentId.value,
+      null,
+      null,
+      semesterId.value,
+    )
+    if (res.code === 200) {
+      const { data } = res as unknown as { data: StandardStaticsItem[] }
+      let arr: number[] = []
+      data.forEach(e => arr.push(e.value))
+      if (!sixStandardChart.value) {
+        sixStandardChart.value = echarts.init(sat.value)
+      }
+      const sixStandardOPtions = getSSCOptions(arr)
+      sixStandardChart.value.setOption(sixStandardOPtions)
+    } else {
+      ElMessage.error(res.message)
+    }
+    sixStandardLoad.value = false
+  }
+  catch (e) {
+    console.log(`获取异常${e}`)
+    ElMessage.error(`获取异常${e}`)
+  }
+}
+
+const toSixStandardChart = () => {
+  ElMessage.success("功能开发中")
+}
+
+const threeStandardLoad = ref<boolean>(false)
+const tds = ref()
+const threeStandardChart = ref()
+
+const getThreeStandardChart = async () => {
+  threeStandardLoad.value = true
+  try {
+    const res = await rqChart.getThreeStandardsStatics(
+      departmentId.value,
+      null,
+      null,
+      semesterId.value,
+    )
+    if (res.code === 200) {
+      const { data } = res as unknown as { data: ThreeStandardsStaticsItem[] }
+      console.log('data', data)
+      const name = ['product']
+      const methods = ['方法与技能']
+      const emotion = ['道理与情感']
+      const understand = ['价值观与认识']
+      data.forEach(e => {
+        name.push(e.name)
+        methods.push(e.value[0].value)
+        emotion.push(e.value[1].value)
+        understand.push(e.value[2].value)
+      })
+      const barType: string[] = new Array(name.length - 1).fill({ type: 'bar' })
+      if (!threeStandardChart.value) {
+        threeStandardChart.value = echarts.init(tds.value)
+      }
+      const threeStandardOptions = getTDSOptions(name, methods, emotion, understand, barType)
+      threeStandardChart.value.setOption(threeStandardOptions)
+    }
+    else {
+      ElMessage.error(res.message)
+    }
+    threeStandardLoad.value = false
+  }
+  catch (e) {
+    console.log(`获取异常${e}`)
+    ElMessage.error(`获取异常${e}`)
+  }
+}
+
+const toThreeStandardChart = () => {
+  ElMessage.success("功能开发中")
+}
+
+const getEchartsData = async () => {
+  try {
+    await getRankChart()
+    await getWordCloud()
+    await getCategoryChart()
+    await getUserCountChart()
+    await getSixStandardChart()
+    await getThreeStandardChart()
+  }
+  catch (e) {
+    console.log(`获取异常${e}`)
+    ElMessage.error(`获取异常${e}`)
+  }
+}
 
 onMounted(async () => {
+  await semesterStore.getSemesterInfo()
   await getSemesterList()
   await getBaseInfo()
   await initCourseData()
-  loadList()
+  await getEchartsData()
+  await loadList()
   if (!localStorage.getItem("firstLogin")) {
     guidePage();
   }
@@ -445,6 +851,40 @@ interface CourseData {
   dataX: string[]
   dataY: string[]
   total: string
+}
+
+interface WordItem {
+  name: string
+  value: number
+}
+
+interface SemesterDataItem {
+  createBy: string;
+  departmentId: number | null;
+  end: string;
+  gmtCreate: string;
+  gmtModified: string;
+  grade: number | null;
+  id: string;
+  isDeleted: number;
+  semesterName: string;
+  start: string;
+  updateBy: string | null;
+}
+
+interface CategoryChartItem {
+  name: string
+  value: number
+}
+
+interface StandardStaticsItem {
+  name: string
+  value: number
+}
+
+interface ThreeStandardsStaticsItem {
+  name: string
+  value: { name: string; value: string }[]
 }
 
 const getCDCOptions = (dataX: string[], dataY: string[]) => {
@@ -567,6 +1007,261 @@ const getCDCOptions = (dataX: string[], dataY: string[]) => {
         },
       },
     ],
+  };
+}
+
+const getUCCOptions = (time: string[], numbers: string[]) => {
+  return {
+    color: "#14b1eb",
+    title: {
+      subtextStyle: {
+        color: "rgba(0,0,0,1)",
+        fontSize: 15,
+        fontWeight: 300,
+      },
+      itemGap: 20,
+      left: "center",
+      bottom: "1%",
+    },
+    tooltip: {
+      trigger: "axis",
+      backgroundColor: "skyblue",
+      axisPointer: {
+        lineStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              {
+                offset: 0,
+                color: "rgba(126,199,255,0)", // 0% 处的颜色
+              },
+              {
+                offset: 0.5,
+                color: "rgba(126,199,255,1)", // 100% 处的颜色
+              },
+              {
+                offset: 1,
+                color: "rgba(126,199,255,0)", // 100% 处的颜色
+              },
+            ],
+            global: false, // 缺省为 false
+          },
+        },
+      },
+    },
+    grid: {
+      top: "18%",
+      left: "15%",
+      right: "5%",
+      bottom: "25%",
+      // containLabel: true
+    },
+    xAxis: [
+      {
+        type: "category",
+        boundaryGap: false,
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: "#14b1eb",
+          },
+        },
+        axisLabel: {
+          textStyle: {
+            color: "#14b1eb",
+            padding: 10,
+            fontSize: 14,
+          },
+          formatter: function (data: string) {
+            return data;
+          },
+        },
+        splitLine: {
+          show: true,
+          lineStyle: {
+            color: "#192a4411",
+          },
+        },
+        axisTick: {
+          show: false,
+        },
+        data: time,
+      },
+    ],
+    yAxis: [
+      {
+        name: "人次5",
+        nameTextStyle: {
+          color: "#14b1eb",
+          fontSize: 12,
+          padding: -5,
+        },
+        min: 0,
+        splitLine: {
+          show: true,
+          lineStyle: {
+            color: "#192a4411",
+          },
+        },
+        axisLine: {
+          show: true,
+          lineStyle: {
+            color: "#23365311",
+          },
+        },
+        axisLabel: {
+          show: true,
+          textStyle: {
+            color: "#14b1eb",
+            padding: 16,
+          },
+          // formatter: function (value) {
+          //   if (value === 0) {
+          //     return value;
+          //   }
+          //   return value;
+          // },
+        },
+        axisTick: {
+          show: false,
+        },
+      },
+    ],
+    series: [
+      {
+        name: "人次",
+        type: "line",
+        smooth: true,
+        // showSymbol: false,
+        symbolSize: 8,
+        zlevel: 3,
+        lineStyle: {
+          normal: {
+            color: "#14b1eb",
+            shadowBlur: 3,
+            shadowColor: "#14b1eb66",
+            shadowOffsetY: 8,
+          },
+        },
+        markPoint: {
+          label: {
+            normal: {
+              textStyle: {
+                color: "#fff",
+              },
+            },
+          },
+          data: [
+            {
+              type: "max",
+              name: "最多",
+            },
+            {
+              type: "min",
+              name: "最少",
+            },
+          ],
+        },
+        areaStyle: {
+          color: new echarts.graphic.LinearGradient(
+            0,
+            0,
+            0,
+            1,
+            [
+              {
+                offset: 0,
+                color: "#14b1ebee",
+              },
+              {
+                offset: 1,
+                color: "#14b1eb00",
+              },
+            ],
+            false
+          ),
+          shadowColor: "#14b1eb11",
+          shadowBlur: 10,
+        },
+        data: numbers,
+      },
+    ],
+  };
+}
+
+const getSSCOptions = (data: number[]) => {
+  return {
+    toolbox: {
+      show: true,
+    },
+    tooltip: {
+      trigger: "item",
+      // formatter: "{a} <br/>{b} : {c}个 ({d}%)",
+    },
+    radar: {
+      legend: {
+        data: ["达标分数", "实际达标"],
+      },
+      axisLine: {
+        lineStyle: {
+          color: "gray",
+        },
+      },
+      splitArea: {
+        areaStyle: {
+          color: ["rgba(145,204,117,0.2)", "rgba(210,219,238,0.2"],
+        },
+      },
+      // shape: 'circle',
+      indicator: [
+        { name: "公益服务劳动", max: 100 },
+        { name: "劳动理论劳动", max: 100 },
+        { name: "日常生活学习", max: 100 },
+        { name: "生产顶岗劳动", max: 100 },
+        { name: "三下乡社会实践", max: 100 },
+        { name: "其他方式劳动", max: 100 },
+      ],
+    },
+    series: [
+      {
+        name: "达标 vs 实际",
+        type: "radar",
+        data: [
+          {
+            value: [60, 60, 60, 60, 60, 60],
+            name: "达标分数",
+          },
+          {
+            value: data,
+            name: "实际达标",
+          },
+        ],
+      },
+    ],
+    legend: {
+      left: "right",
+      backgroundColor: "rgba(0,0,0,0)",
+    },
+  };
+}
+
+const getTDSOptions = (name: string[], methods: string[], emotion: string[], understand: string[], barType: string[]) => {
+  return {
+    legend: {},
+    tooltip: {},
+    dataset: {
+      source: [name, methods, emotion, understand],
+    },
+    xAxis: { type: "category" },
+    yAxis: {},
+    // Declare several bar series, each will be mapped
+    // to a column of dataset.source by default.
+    series: barType,
+    color: ['#81a3ee']
   };
 }
 </script>
@@ -698,6 +1393,21 @@ const getCDCOptions = (dataX: string[], dataY: string[]) => {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+
+    .searchSemester {
+      width: 75%;
+      display: flex;
+      align-items: center;
+
+      .label {
+        white-space: nowrap;
+        margin-right: 10px;
+      }
+
+      :deep(.el-select) {
+        flex: 1;
+      }
+    }
 
     .data {
       display: flex;

@@ -8,19 +8,15 @@ export const useSemesterStore = defineStore('semester', () => {
   const start = ref<string | null>(null)
   const end = ref<string | null>(null)
 
-  const setSemester = (data: SemesterInfo) => {
-    id.value = data.id as string
-    semesterName.value = data.semesterName
-    start.value = data.start
-    end.value = data.end
-  }
-
   const getSemesterInfo = async () => {
     try {
       const res = await getSemesterNow()
       if (res.code === 200) {
         const { data } = res
-        setSemester(data)
+        id.value = data.id as string
+        semesterName.value = data.semesterName
+        start.value = data.start
+        end.value = data.end
       } else {
         throw new Error('获取学期信息失败')
       }

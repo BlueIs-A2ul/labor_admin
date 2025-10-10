@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import registerSvgIcon from './icons/index'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import 'echarts-wordcloud'
 
 import '@/styles/index.scss'
 import App from './App.vue'

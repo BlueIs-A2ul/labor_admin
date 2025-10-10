@@ -83,11 +83,9 @@ const getBreadcrumb = () => {
 
   levelList.value = matched.filter(
     (item) => {
-      console.log('item', item)
       return item.meta && item.meta.title
     }
   )
-  console.log('levelList', levelList.value)
 }
 
 watch(

@@ -65,8 +65,8 @@ export function getChartDailyCourse(
  * @returns 课程分类饼状图数据
  */
 export function getChartCourseCategory(
-  departmentId: number,
-  semesterId: number,
+  departmentId: string | null,
+  semesterId: string | null,
 ): Promise<CourseClassificationRes> {
   return request({
     url: API.CLASSIFICATION,
@@ -96,15 +96,15 @@ export function getTotalData(): Promise<TotalRes> {
 }
 
 export function getUserCountChart(
-  start: string,
-  end: string,
-  semesterId: number,
-  dateFormat: string,
-  departmentId: number,
-  majorId: number,
-  classId: number,
-  grade: number,
-  type: string,
+  start: string | null,
+  end: string | null,
+  semesterId: string | null,
+  dateFormat: string | null,
+  departmentId: string | null,
+  majorId?: number,
+  classId?: number,
+  grade?: number,
+  type?: string,
 ): Promise<DailyStatisticsOfCourseUserDataRes> {
   return request({
     url: API.DAILY_COURSE_USER_COUNT,
@@ -136,10 +136,10 @@ export function getUserCountChart(
  * @returns
  */
 export function getRankChart(
-  start = null,
-  end = null,
-  semesterId: number,
-  departmentId: number,
+  start: number | null = null,
+  end: number | null = null,
+  semesterId: string | null,
+  departmentId: number | null = null,
 ): Promise<GetRankRes> {
   return request({
     url: API.STUDENT_RANK,
@@ -194,11 +194,11 @@ export function gradeCreditStatistics() {
  * @param {int} grade 年级
  */
 export function getSixStandardStatics(
-  departmentId: number,
-  majorId: number,
-  classId: number,
-  semesterId: number,
-  grade: number,
+  departmentId: string | null,
+  majorId: string | null,
+  classId: string | null,
+  semesterId: string | null,
+  grade?: string | null,
 ): Promise<APIResponse> {
   return request({
     url: API.SIX_STANDARD,
@@ -224,11 +224,11 @@ export function getSixStandardStatics(
  * @param {int} grade 年级
  */
 export function getThreeStandardsStatics(
-  departmentId: number,
-  majorId: number,
-  classId: number,
-  semesterId: number,
-  grade: number,
+  departmentId: string | null,
+  majorId: string | null,
+  classId: string | null,
+  semesterId: string | null,
+  grade?: number,
 ): Promise<APIResponse> {
   return request({
     url: API.THREE_STANDARD,

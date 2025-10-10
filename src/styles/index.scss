@@ -1,7 +1,7 @@
-@import './variables.scss';
-@import './mixin.scss';
-@import './transition.scss';
-@import './sidebar.scss';
+@use './sidebar.scss' as *;
+@use './variables.scss' as *;
+@use './mixin.scss' as *;
+@use './transition.scss' as *;
 
 body {
   height: 100%;

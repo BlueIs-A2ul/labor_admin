@@ -15,7 +15,7 @@ export function addSemester({
   grade,
   departmentId,
   dimensionalityInfo,
-}: Semester) {
+}: Semester): Promise<APIResponse> {
   return request({
     url: MODEL_BASE_URL,
     method: 'POST',
@@ -31,7 +31,7 @@ export function modifySemester({
   grade,
   departmentId,
   dimensionalityInfo,
-}: Semester) {
+}: Semester): Promise<APIResponse> {
   return request({
     url: MODEL_BASE_URL,
     method: 'PUT',
@@ -52,7 +52,7 @@ export function modifySemester({
  * @deprecated 请不要使用此接口
  * @returns {AxiosPromise}
  */
-export function getAllSemesters() {
+export function getAllSemesters(): Promise<APIResponse> {
   return request({
     url: API.ALL,
     method: 'GET',
@@ -68,7 +68,11 @@ export function getAllSemesters() {
  * @param {Array} departmentLimits
  * @returns 条件分页查询的学期的结果
  */
-export function searchSemestersPage(pageNum: number, pageSize: number, key: string) {
+export function searchSemestersPage(
+  pageNum: number,
+  pageSize: number,
+  key: string,
+): Promise<APIResponse> {
   return request({
     url: API.PAGE,
     method: 'POST',
@@ -83,7 +87,7 @@ export function searchSemestersPage(pageNum: number, pageSize: number, key: stri
  * 获取学期信息
  * @returns 学期信息
  */
-export async function getSemesterNow() {
+export async function getSemesterNow(): Promise<APIResponse> {
   return await request({
     url: API.NOW,
     method: 'GET',
@@ -93,7 +97,7 @@ export async function getSemesterNow() {
   })
 }
 
-export function searchSingleSemester(id: number | string) {
+export function searchSingleSemester(id: number | string): Promise<APIResponse> {
   return request({
     url: `${MODEL_BASE_URL}/${id}`,
     method: 'GET',
@@ -103,7 +107,7 @@ export function searchSingleSemester(id: number | string) {
   })
 }
 
-export function deleteSemester(id: number | string) {
+export function deleteSemester(id: number | string): Promise<APIResponse> {
   return request({
     url: `${MODEL_BASE_URL}/${id}`,
     method: 'DELETE',
@@ -111,4 +115,11 @@ export function deleteSemester(id: number | string) {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
   })
+}
+
+interface APIResponse {
+  success: boolean
+  message: string
+  code: number
+  data: Record<string, unknown>
 }

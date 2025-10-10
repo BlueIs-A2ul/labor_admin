@@ -16,7 +16,6 @@ export default defineConfigWithVueTs(
         },
       ],
 
-      // ====================== 代码风格规则 ======================
       // 缩进使用2个空格，switch语句的case缩进1个级别
       indent: ['error', 2, { SwitchCase: 1 }],
 
@@ -50,7 +49,6 @@ export default defineConfigWithVueTs(
       // 关键字前后必须有空格
       'keyword-spacing': ['error', { before: true, after: true }],
 
-      // ====================== 最佳实践规则 ======================
       // 强制使用严格等于 ===（除null比较外）
       eqeqeq: ['error', 'always', { null: 'ignore' }],
 
@@ -94,7 +92,6 @@ export default defineConfigWithVueTs(
       // 生产环境禁止使用debugger
       'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
 
-      // ====================== TypeScript特定规则 ======================
       // 强制使用const声明不会被修改的变量
       '@typescript-eslint/prefer-const': 'error',
 
