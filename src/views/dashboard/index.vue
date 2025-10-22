@@ -40,8 +40,8 @@
           <div id="datePicker">
             选择范围:
             <el-date-picker v-model="CDCTimeRange" size="small" :disabled="CDCPickDisabled" type="daterange"
-              align="right" unlink-panels :first-day-of-week="1" range-separator="至" start-placeholder="开始日期"
-              end-placeholder="结束日期" format="yyyy年MM月dd日" value-format="yyyy-MM-dd" :shortcuts="shortcutsOptions"
+              unlink-panels :first-day-of-week="1" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期"
+              format="yyyy年MM月dd日" value-format="yyyy-MM-dd" :shortcuts="shortcutsOptions"
               @change="handleCDCPickChange" />
           </div>
           <div id="interval">
@@ -63,11 +63,11 @@
             justify-content: space-between;
           ">
           积分排行榜(前五)
-          <svg id="toRankPage" t="1690213260873" class="icon" viewBox="0 0 1024 1024" version="1.1"
-            xmlns="http://www.w3.org/2000/svg" p-id="1591" width="35" height="35" @click="openRankList">
+          <svg id="toRankPage" b="1690213260873" class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg"
+            width="35" height="35" @click="openRankList">
             <path
               d="M530.374089 9.664293l2.006019 273.998643c-31.234901 2.277422-62.387202 8.968086-93.456901 20.060193-6.608064-46.728451-8.732084-93.775504-6.372062-141.129361v-135.701309c-0.554605-5.038649 0.354003-9.440091 2.714027-13.216127 1.699216-2.832027 5.357252-4.554844 9.558092-4.484043l85.550825 0.472004z"
-              fill="#5169CC" p-id="1592" />
+              fill="#5169CC" />
             <path
               d="M530.374089 9.664293c27.140262-8.26008 48.026463-2.950028 62.658604 15.930154l-0.236002 89.798866v50.150484l-6.844066 138.651337c-20.142794 5.982658-37.996366-0.861408-53.572517-20.532198L530.374089 9.664293z"
               fill="#3351C5" p-id="1593" />
@@ -202,8 +202,7 @@ import { guidePage } from './firstLogin'
 import router from '@/router'
 import { calculate } from '@/apis/common'
 import { wordCloudCondition } from '@/apis/word/word'
-import { use } from 'echarts/types/src/extension.js'
-import { ca } from 'element-plus/es/locales.mjs'
+import { useCategoryChart } from './hooks/useCategoryChart'
 
 const semesterStore = useSemesterStore()
 const departmentStore = useDepartmentStore()
@@ -314,7 +313,7 @@ const getBaseInfo = async () => {
 const chooseNewSemester = async (value: string) => {
   if (value !== semesterId.value) {
     semesterStore.id = value
-    loadList()
+    await loadList()
   }
 }
 
@@ -329,11 +328,6 @@ const courseRange = reactive({
   end: '',
   timeFormat: "yyyy-MM-dd",
 })
-
-const disabledDateFunction = (time: Date) => {
-  // 禁用今天的日期之后的所有日期
-  return time.getTime() > Date.now()
-}
 
 const shortcutsOptions = [
   {
@@ -443,7 +437,7 @@ const toWordCloud = async () => {
   const queryDepartmentList = toRaw(departmentList.value)
   console.log(JSON.stringify(queryDepartmentList))
   //encodeURI
-  router.push({
+  await router.push({
     path: "/chartInfo/wordCloud",
     query: {
       departmentList: queryDepartmentList,
@@ -456,7 +450,7 @@ const toCategoryChart = async () => {
   if (!departmentList.value.length) {
     await loadList()
   }
-  router.push({
+  await router.push({
     path: "/chartInfo/categoryChart",
     query: {
       departmentList: departmentList,
@@ -468,7 +462,7 @@ const toUserCount = async () => {
   if (!departmentList.value.length) {
     await loadList()
   }
-  router.push({
+  await router.push({
     path: "/chartInfo/userCount",
     query: {
       departmentList: departmentList,
@@ -623,7 +617,7 @@ const getRCOptions = (dataX: string[], dataY: string[]) => {
           formatter: "{c} 分", // 这里是数据展示的时候显示的数据
         }, // 柱子上方的数值
         itemStyle: {
-          barBorderRadius: [0, 0, 0, 0], // 圆角（左上、右上、右下、左下）
+          borderRadius: [0, 0, 0, 0], // 圆角（左上、右上、右下、左下）
           color: "#419fff",
         },
         data: dataY,
@@ -636,29 +630,33 @@ const categoryLoad = ref<boolean>(false)
 const categoryChart = ref()
 const categoryChartDOM = ref()
 
-const getCategoryChart = async () => {
-  categoryLoad.value = true
-  try {
-    const res = await rqChart.getChartCourseCategory(
-      departmentId.value,
-      semesterId.value
-    )
-    if (res.code === 200) {
-      const { data } = res as unknown as { data: CategoryChartItem[] }
-      if (!categoryChart.value) {
-        categoryChart.value = echarts.init(categoryChartDOM.value)
-      }
-      const categoryOptions = getCGCOptions(data)
-      categoryChart.value.setOption(categoryOptions)
-    } else {
-      ElMessage.error(res.message)
-    }
-    categoryLoad.value = false
-  }
-  catch (_) {
-    ElMessage.error("网络异常，请稍后再试")
-  }
-}
+const { getCategoryChart } = useCategoryChart()
+
+
+
+// const getCategoryChart = async () => {
+//   categoryLoad.value = true
+//   try {
+//     const res = await rqChart.getChartCourseCategory(
+//       departmentId.value,
+//       semesterId.value
+//     )
+//     if (res.code === 200) {
+//       const { data } = res as unknown as { data: CategoryChartItem[] }
+//       if (!categoryChart.value) {
+//         categoryChart.value = echarts.init(categoryChartDOM.value)
+//       }
+//       const categoryOptions = getCGCOptions(data)
+//       categoryChart.value.setOption(categoryOptions)
+//     } else {
+//       ElMessage.error(res.message)
+//     }
+//     categoryLoad.value = false
+//   }
+//   catch (_) {
+//     ElMessage.error("网络异常，请稍后再试")
+//   }
+// }
 
 const getCGCOptions = (data: any[]) => {
   return {
@@ -776,7 +774,6 @@ const getThreeStandardChart = async () => {
     )
     if (res.code === 200) {
       const { data } = res as unknown as { data: ThreeStandardsStaticsItem[] }
-      console.log('data', data)
       const name = ['product']
       const methods = ['方法与技能']
       const emotion = ['道理与情感']
@@ -813,7 +810,7 @@ const getEchartsData = async () => {
   try {
     await getRankChart()
     await getWordCloud()
-    await getCategoryChart()
+    await getCategoryChart(categoryChartDOM.value, departmentId, semesterId)
     await getUserCountChart()
     await getSixStandardChart()
     await getThreeStandardChart()
@@ -913,10 +910,8 @@ const getCDCOptions = (dataX: string[], dataY: string[]) => {
       itemGap: 25,
       itemWidth: 16,
       itemHeight: 16,
-      textStyle: {
-        fontSize: "13",
-        color: "#666666",
-      },
+      fontSize: 13,
+      color: "#666666",
     },
     xAxis: [
       {
@@ -925,9 +920,7 @@ const getCDCOptions = (dataX: string[], dataY: string[]) => {
           interval: 0,
           margin: 10,
           color: "rgba(0,0,0,0.45)",
-          textStyle: {
-            fontSize: 12,
-          },
+          fontSize: 12,
         },
         axisLine: {
           lineStyle: {
@@ -949,9 +942,7 @@ const getCDCOptions = (dataX: string[], dataY: string[]) => {
         },
         axisLabel: {
           color: "rgba(0,0,0,0.45)",
-          textStyle: {
-            fontSize: 12,
-          },
+          fontSize: 12,
         },
         axisLine: {
           show: true,
@@ -978,10 +969,8 @@ const getCDCOptions = (dataX: string[], dataY: string[]) => {
         data: dataY,
         barWidth: "32px",
         itemStyle: {
-          normal: {
-            color: "#0FBA77",
-            barBorderRadius: [100, 100, 0, 0],
-          },
+          color: "#0FBA77",
+          borderRadius: [100, 100, 0, 0],
         },
       },
       {
@@ -990,20 +979,16 @@ const getCDCOptions = (dataX: string[], dataY: string[]) => {
         data: dataY,
         symbolSize: 16,
         lineStyle: {
-          normal: {
-            width: 4,
-            color: "rgba(247,150,0,1)",
-            shadowColor: "rgba(247,150,0,0.38)",
-            shadowBlur: 6,
-            shadowOffsetY: 8,
-          },
+          width: 4,
+          color: "rgba(247,150,0,1)",
+          shadowColor: "rgba(247,150,0,0.38)",
+          shadowBlur: 6,
+          shadowOffsetY: 8,
         },
         itemStyle: {
-          normal: {
-            color: "rgba(247,150,0,1)",
-            borderColor: "rgba(247,150,0,1)",
-            borderWidth: 4,
-          },
+          color: "rgba(247,150,0,1)",
+          borderColor: "rgba(247,150,0,1)",
+          borderWidth: 4,
         },
       },
     ],
@@ -1071,11 +1056,9 @@ const getUCCOptions = (time: string[], numbers: string[]) => {
           },
         },
         axisLabel: {
-          textStyle: {
-            color: "#14b1eb",
-            padding: 10,
-            fontSize: 14,
-          },
+          color: "#14b1eb",
+          padding: 10,
+          fontSize: 14,
           formatter: function (data: string) {
             return data;
           },
@@ -1140,19 +1123,15 @@ const getUCCOptions = (time: string[], numbers: string[]) => {
         symbolSize: 8,
         zlevel: 3,
         lineStyle: {
-          normal: {
-            color: "#14b1eb",
-            shadowBlur: 3,
-            shadowColor: "#14b1eb66",
-            shadowOffsetY: 8,
-          },
+          color: "#14b1eb",
+          shadowBlur: 3,
+          shadowColor: "#14b1eb66",
+          shadowOffsetY: 8,
         },
         markPoint: {
           label: {
-            normal: {
-              textStyle: {
-                color: "#fff",
-              },
+            textStyle: {
+              color: "#fff",
             },
           },
           data: [

@@ -12,7 +12,8 @@ const API = {
 }
 
 import type { LoginParams, PageParams, UserModel } from '@/types/apis/user'
-export function login(data: LoginParams) {
+import type { ResponseData } from '@/types/apis/role'
+export function login(data: LoginParams): Promise<ResponseData> {
   return request({
     url: API.LOGIN,
     method: 'post',
@@ -21,7 +22,7 @@ export function login(data: LoginParams) {
 }
 
 //TODO: 我也不知道类型
-export function getInfo(token: string) {
+export function getInfo(token: string): Promise<ResponseData> {
   return request({
     url: API.INFO,
     method: 'get',
@@ -36,7 +37,13 @@ export function logout() {
   })
 }
 
-export function userPageApi({ pageNum, pageSize, key, type, withRole }: PageParams) {
+export function userPageApi({
+  pageNum,
+  pageSize,
+  key,
+  type,
+  withRole,
+}: PageParams): Promise<ResponseDataUserPageApi> {
   if (!key) {
     key = null
   }
@@ -56,7 +63,7 @@ export function userPageApi({ pageNum, pageSize, key, type, withRole }: PagePara
   })
 }
 
-export function addUser(data: UserModel) {
+export function addUser(data: UserModel): Promise<ResponseData> {
   return request({
     url: MODEL_BASE_URL,
     method: 'post',
@@ -64,7 +71,7 @@ export function addUser(data: UserModel) {
   })
 }
 
-export function updateUser(data: UserModel) {
+export function updateUser(data: UserModel): Promise<ResponseData> {
   return request({
     url: MODEL_BASE_URL,
     method: 'put',
@@ -72,13 +79,13 @@ export function updateUser(data: UserModel) {
   })
 }
 
-export function deleteUser(userId: string) {
+export function deleteUser(userId: string): Promise<ResponseData> {
   return request({
     url: `/${MODEL_BASE_URL}/${userId}`,
     method: 'delete',
   })
 }
-export function userList({ pageNum, pageSize, key, type }: PageParams) {
+export function userList({ pageNum, pageSize, key, type }: PageParams): Promise<ResponseData> {
   return request({
     url: API.PAGE,
     method: 'get',
@@ -91,10 +98,10 @@ export function userList({ pageNum, pageSize, key, type }: PageParams) {
   })
 }
 //TODO: 我也不知道是number还是string 先写string
-export const bindRoleApi = (userId: string, roleId: string) =>
+export const bindRoleApi = (userId: string, roleId: string): Promise<ResponseData> =>
   request.post(`${API.BIND}/${userId}/${roleId}`)
 
-export const unbindRoleApi = (userId: string, roleId: string) =>
+export const unbindRoleApi = (userId: string, roleId: string): Promise<ResponseData> =>
   request.delete(`${API.UNBIND}/${userId}/${roleId}`)
 
 /**
@@ -103,8 +110,15 @@ export const unbindRoleApi = (userId: string, roleId: string) =>
  * @param {string} password
  * @returns
  */
-export function resetPassword(uid: string, password: string) {
+export function resetPassword(uid: string, password: string): Promise<ResponseData> {
   return request.post(`/user/resetPassword`, null, {
     params: { uid, password },
   })
+}
+
+interface ResponseDataUserPageApi extends ResponseData {
+  data: {
+    list: UserModel[]
+    total: number
+  }
 }

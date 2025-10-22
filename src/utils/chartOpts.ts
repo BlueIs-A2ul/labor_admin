@@ -262,16 +262,14 @@ export function getGradeScorePieOpts(xData, yData) {
       {
         type: 'bar',
         label: {
-          normal: {
-            show: true,
-            position: 'top',
-            formatter: (e) => {
-              return e.value + '分'
-            },
-            fontSize: 16,
-            color: '#43C4F1',
-            offset: [0, -25],
+          show: true,
+          position: 'top',
+          formatter: (e: any) => {
+            return e.value + '分'
           },
+          fontSize: 16,
+          color: '#43C4F1',
+          offset: [0, -25],
         },
         itemStyle: {
           color: 'transparent',

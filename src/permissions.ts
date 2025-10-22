@@ -24,25 +24,33 @@ router.beforeEach(
         next('/')
         NProgress.done()
       } else {
-        const hasRoles = userStore.roles && userStore.roles.length > 0
+        const hasRoles: boolean = userStore.roles && userStore.roles.length > 0
         if (hasRoles) {
           if (to.path !== '/') {
             next()
           } else {
             next('/404')
           }
+
+          // TODO 优化逻辑
+          // 别删 不然用不了
+          const roles = await userStore.fetchUserInfo()
+          const accessRoutes = await permissionStore.generateRoutes(roles)
+          accessRoutes.forEach((route) => {
+            router.addRoute(route)
+          })
+          await semesterStore.getSemesterInfo()
         } else {
           try {
             const roles = await userStore.fetchUserInfo()
             const accessRoutes = await permissionStore.generateRoutes(roles)
-            router.options.routes = permissionStore.routes
             accessRoutes.forEach((route) => {
               router.addRoute(route)
             })
-
             await semesterStore.getSemesterInfo()
 
             next({ ...to, replace: true })
+            return
           } catch (err) {
             await permissionStore.clearMap()
             await userStore.resetToken()

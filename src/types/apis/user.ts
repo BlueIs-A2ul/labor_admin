@@ -8,7 +8,7 @@ export interface PageParams {
   pageSize: number
   key?: string | null
   type?: string
-  withRole?: boolean
+  withRole?: string
 }
 
 export interface SimpleUserModel {

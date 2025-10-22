@@ -1,10 +1,12 @@
 <template>
   <section class="app-main">
-    <transition name="fade-transform" mode="out-in">
-      <keep-alive :include="cacheRoute" :exclude="noCacheRoutes">
-        <router-view :key="key" />
-      </keep-alive>
-    </transition>
+    <router-view v-slot="{ Component }">
+      <transition name="fade-transform" mode="out-in">
+        <keep-alive :include="cacheRoute" :exclude="noCacheRoutes">
+          <component :is="Component" :key="key" />
+        </keep-alive>
+      </transition>
+    </router-view>
   </section>
 </template>
 

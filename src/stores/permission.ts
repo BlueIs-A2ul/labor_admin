@@ -24,7 +24,7 @@ export const usePermissionStore = defineStore(
   () => {
     const hasPermission = (roles: string[], route: RouteRecordRaw) => {
       if (!route.meta?.roles) return true
-      return roles.some((role) => route.meta.roles.includes(role))
+      return roles.some((role) => route.meta!.roles!.includes(role))
     }
 
     const routes = ref<RouteRecordRaw[]>([])
@@ -56,37 +56,80 @@ export const usePermissionStore = defineStore(
       permissionsTree.value = permissions
     }
 
-    const flattenPermissions = () => {
+    const flattenPermissions = async () => {
       const pTree = JSON.parse(JSON.stringify(permissionsTree.value))
       permissionsFlat.value = flatten(pTree)
     }
 
-    const generateRoutes = async (roles: []) => {
+    const generateRoutes = async (roles: string[]) => {
       let userRoutes = []
-      if ((roles as string[]).indexOf('router') >= 0) {
-        userRoutes = asyncRouterMap
+
+      // 检查是否是超级管理员（拥有所有权限）
+      const isAdmin = roles.includes('admin') // 假设 admin 是超级管理员角色
+
+      if (isAdmin) {
+        // 超级管理员拥有所有路由权限
+        userRoutes = deepCloneRoutes(asyncRouterMap) // 深拷贝避免修改原始数据
       } else {
-        userRoutes = asyncRouterMap.filter((route) => {
-          if (hasPermission(roles, route)) {
-            if (route.children && route.children.length > 0) {
-              route.children = route.children.filter((childRoute: RouteRecordRaw) => {
-                return hasPermission(roles, childRoute)
-              })
-              return route
-            } else {
-              return route
-            }
-          }
-          return false
-        })
+        // 普通用户根据角色过滤路由
+        userRoutes = filterAsyncRoutes(asyncRouterMap, roles)
       }
+
       const accessRoutes = userRoutes
       addRoutes.value = accessRoutes
-      //routes.value = [...constantRouterMap, ...(routes.value as RouteRecordRaw[])]
       routes.value = [...constantRouterMap, ...userRoutes]
-      console.log('routes', routes.value)
       return accessRoutes
     }
+
+    // 深拷贝路由配置，避免修改原始数据
+    function deepCloneRoutes(routes: RouteRecordRaw[]): RouteRecordRaw[] {
+      return JSON.parse(JSON.stringify(routes))
+    }
+
+    function filterAsyncRoutes(routes: RouteRecordRaw[], roles: string[]): RouteRecordRaw[] {
+      const res: RouteRecordRaw[] = []
+
+      routes.forEach((route) => {
+        const tmp = { ...route }
+
+        if (hasPermission(roles, tmp)) {
+          if (tmp.children) {
+            tmp.children = filterAsyncRoutes(tmp.children, roles)
+          }
+          res.push(tmp)
+        }
+      })
+
+      return res
+    }
+
+    // const generateRoutes = async (roles: []) => {
+    //   let userRoutes = []
+    //   if ((roles as string[]).indexOf('router') >= 0) {
+    //     userRoutes = asyncRouterMap
+    //   } else {
+    //     userRoutes = asyncRouterMap.filter((route) => {
+    //       if (hasPermission(roles, route)) {
+    //         if (route.children && route.children.length > 0) {
+    //           route.children = route.children.filter((childRoute: RouteRecordRaw) => {
+    //             return hasPermission(roles, childRoute)
+    //           })
+    //           return route
+    //         } else {
+    //           return route
+    //         }
+    //       }
+    //       return false
+    //     })
+    //   }
+    //   const accessRoutes = userRoutes
+    //   addRoutes.value = accessRoutes
+    //   //routes.value = [...constantRouterMap, ...(routes.value as RouteRecordRaw[])]
+    //   routes.value = [...constantRouterMap, ...userRoutes]
+    //   return accessRoutes
+    // }
+
+    //const generateRoutes = async (roles) => {}
 
     const deleteP = async (id: number | string) => {
       try {
@@ -131,7 +174,6 @@ export const usePermissionStore = defineStore(
 
     const modifyPermission = async (modified: AddPermissionParams) => {
       try {
-        //TODO 这里类型有点诡异
         const res = await updatePermission(modified)
         if (res.code === 200) {
           modified = getKeyName(modified) as AddPermissionParams
@@ -188,3 +230,9 @@ export const usePermissionStore = defineStore(
     persist: true,
   },
 )
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    roles?: string[]
+  }
+}

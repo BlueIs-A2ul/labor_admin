@@ -5,6 +5,7 @@ import type {
   PermissionIdParams,
   ParentIdParams,
 } from '@/types/apis/permission'
+import type { ResponseData } from '@/types/apis/role'
 const MODEL_BASE_URL = '/user/permission/'
 const API = {
   LAZY_LOAD: `${MODEL_BASE_URL}/lazyLoad`,
@@ -14,14 +15,14 @@ const API = {
  * 查询所有权限(树形权限,用于权限配置时选择)
  * @returns {AxiosPromise}
  */
-export function getAllPermissions() {
+export function getAllPermissions(): Promise<ResponseData> {
   return request({
     url: MODEL_BASE_URL,
     method: 'GET',
   })
 }
 
-export function addPermission(data: AddPermissionParams) {
+export function addPermission(data: AddPermissionParams): Promise<ResponseData> {
   return request({
     url: MODEL_BASE_URL,
     method: 'POST',
@@ -29,21 +30,21 @@ export function addPermission(data: AddPermissionParams) {
   })
 }
 
-export function deletePermission(id: PermissionIdParams) {
+export function deletePermission(id: PermissionIdParams): Promise<ResponseData> {
   return request({
     url: `${MODEL_BASE_URL}/${id}`,
     method: 'DELETE',
   })
 }
 
-export function getChildrenList(parentId: ParentIdParams) {
+export function getChildrenList(parentId: ParentIdParams): Promise<ResponseData> {
   return request({
     url: `${API.LAZY_LOAD}/${parentId}`,
     method: 'GET',
   })
 }
 
-export function updatePermission(data: AddPermissionParams) {
+export function updatePermission(data: AddPermissionParams): Promise<ResponseData> {
   return request({
     url: MODEL_BASE_URL,
     method: 'PUT',
@@ -51,7 +52,7 @@ export function updatePermission(data: AddPermissionParams) {
   })
 }
 
-export function getPermissionById(id: PermissionIdParams) {
+export function getPermissionById(id: PermissionIdParams): Promise<ResponseData> {
   return request({
     url: `${MODEL_BASE_URL}${id}`,
     method: 'GET',
