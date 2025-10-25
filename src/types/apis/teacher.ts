@@ -10,7 +10,7 @@ export interface AddTeacherParams {
   title?: string
   contact?: Record<string, unknown>
   uid?: number
-  sex?: number
+  sex?: number | string
   departmentId?: number
   password?: string
   userName?: string
@@ -29,6 +29,6 @@ export interface UpdateTeacherParams {
   title?: string
   contact?: Record<string, unknown>
   uid?: number
-  sex?: number
+  sex?: number | string
   departmentId?: number
 }

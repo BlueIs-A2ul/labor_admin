@@ -176,7 +176,7 @@ export const constantRouterMap = [
       {
         path: 'index',
         name: 'index',
-        component: () => import('@/views/commenTags/index.vue'),
+        component: () => import('@/views/commentTags/index.vue'),
         meta: {
           title: '建议维度配置',
           roles: ['complainManage'],
@@ -750,7 +750,7 @@ export const asyncRouterMap = [
       {
         path: 'index',
         name: 'index',
-        component: () => import('@/views/commenTags/index.vue'),
+        component: () => import('@/views/commentTags/index.vue'),
         meta: {
           title: '建议维度配置',
           roles: ['complainManage'],

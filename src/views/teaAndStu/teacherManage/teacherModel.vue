@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <el-dialog title="教师信息" :visible.sync="dialogTableVisible" width="30%" :close-on-click-modal="false"
+    <el-dialog title="教师信息" :model-value="dialogTableVisible" width="30%" :close-on-click-modal="false"
       :before-close="close">
       <el-form :model="teacherInfo" label-width="80px">
         <el-form-item label="姓名">
@@ -25,7 +25,7 @@
         </el-form-item>
         <el-form-item label="性别">
           <el-select placeholder="请选择性别" v-model="teacherInfo.sex"
-            :value="teacherInfo.sex == 1 ? '男' : `${teacherInfo.sex === 0 ? '女' : ''}`" style="width: 80%;">
+            :value="teacherInfo.sex === '1' ? '男' : `${teacherInfo.sex === '0' ? '女' : ''}`" style="width: 80%;">
             <el-option label="男" value="1" />
             <el-option label="女" value="0" />
           </el-select>
@@ -40,9 +40,12 @@
   </div>
 </template>
 
-<script>
+<script lang="ts" setup>
 import { addTeacher, updateTeacher } from '@/apis/teacher'
-const props = {
+import { ElMessage } from 'element-plus'
+import { computed, ref, watch } from 'vue'
+
+const props = defineProps({
   visible: {
     type: Boolean,
     default: false
@@ -57,7 +60,7 @@ const props = {
     type: Boolean,
     default: false
   }
-}
+})
 
 const teacherInfo = {
   name: '',
@@ -70,6 +73,78 @@ const teacherInfo = {
     微信: ''
   }
 }
+
+const emit = defineEmits(['close', 'loadList'])
+
+const copy = ref()
+const dialogTableVisible = computed(() => props.visible)
+const createDisabled = computed(() => {
+  if (teacherInfo.sex !== '0' && teacherInfo.sex !== '1') {
+    return true
+  } else {
+    let values = Object.values(teacherInfo.contact)
+    if (values.every(item => !Boolean(item))) {
+      return true
+    } else {
+      return Object.values(teacherInfo).some(item => !Boolean(item))
+    }
+  }
+})
+
+const updateDisabled = computed(() => copy.value === JSON.stringify(props.teacher))
+
+const close = async () => {
+  emit('close')
+  emit('loadList')
+}
+
+const handleCreate = async () => {
+  const res = await addTeacher(teacherInfo)
+  if (res.code === 200) {
+    ElMessage.success('添加成功')
+    await close()
+  } else {
+    ElMessage.error(res.message)
+  }
+}
+
+const handleUpdate = async () => {
+  const res = await updateTeacher(teacherInfo)
+  if (res.code === 200) {
+    ElMessage.success('修改成功')
+    await close()
+  } else {
+    ElMessage.error(res.message)
+  }
+}
+
+watch(
+  () => props.teacher,
+  (newTeacher, oldTeacher) => {
+    const flag = Object.keys(newTeacher).length
+    if (flag !== 0) {
+      // 深拷贝 teacher 对象，避免直接引用
+      teacherInfo.name = newTeacher.name
+      teacherInfo.title = newTeacher.title
+      teacherInfo.sex = newTeacher.sex
+      teacherInfo.contact.电话 = newTeacher.contact?.电话 || ''
+      teacherInfo.contact.邮箱 = newTeacher.contact?.邮箱 || ''
+      teacherInfo.contact.QQ = newTeacher.contact?.QQ || ''
+      teacherInfo.contact.微信 = newTeacher.contact?.微信 || ''
+      copy.value = JSON.stringify(newTeacher)
+    } else {
+      // 重置为初始值
+      teacherInfo.name = ''
+      teacherInfo.title = ''
+      teacherInfo.sex = ''
+      teacherInfo.contact.电话 = ''
+      teacherInfo.contact.邮箱 = ''
+      teacherInfo.contact.QQ = ''
+      teacherInfo.contact.微信 = ''
+    }
+  },
+  { deep: true, immediate: true }
+)
 
 </script>
 

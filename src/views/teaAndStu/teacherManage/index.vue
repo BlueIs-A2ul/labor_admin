@@ -78,7 +78,8 @@
           @size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
     </div>
-    <TeacherModal :visible="dialogTableVisible" :teacher="currentTeacher" :isUpdate="isUpdate" />
+    <TeacherModel :visible="dialogTableVisible" :teacher="currentTeacher" :isUpdate="isUpdate"
+      :department="departmentList" @close="handleClose" @loadList="loadList" />
   </div>
 </template>
 
@@ -87,7 +88,7 @@ import { clearObj } from '@/apis/common'
 import { deleteTeacher, teacherListApi } from '@/apis/teacher'
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, ref, watch } from 'vue'
-import TeacherModal from './teacherModel.vue'
+import TeacherModel from './teacherModel.vue'
 
 const isUpdate = ref(true)
 const dialogTableVisible = ref(false)
@@ -96,12 +97,12 @@ const keyWords = ref('')
 const loading = ref(false)
 const total = ref(1)
 const teacherList = ref<TeacherListItem[]>([])
+const departmentList = ref<any[]>([])
 const pageParams = ref({
   pageNum: 1,
   pageSize: 10,
 })
 const searchDisabled = computed(() => keyWords.value === '')
-console.log('1')
 
 const handleCreate = () => {
   isUpdate.value = false
@@ -122,6 +123,7 @@ const handleCurrentChange = async (newPage: number) => {
 const handleUpdate = (row: any) => {
   isUpdate.value = true
   currentTeacher.value = row
+  console.log('currentTeacher', currentTeacher.value)
   dialogTableVisible.value = true
 }
 
@@ -150,7 +152,7 @@ const loadList = async () => {
   if (res.code === 200) {
     const { data } = res as unknown as { data: TeacherList }
     teacherList.value = data.list
-    total.value = data.total
+    total.value = Number(data.total)
   } else {
     ElMessage.error('加载失败请重试')
   }

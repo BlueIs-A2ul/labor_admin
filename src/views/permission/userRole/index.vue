@@ -35,7 +35,7 @@
           <el-popconfirm confirm-button-text="我已知晓风险, 确定删除" confirm-button-type="danger" cancel-button-text="放弃本次操作"
             :icon="InfoFilled" icon-color="red" title="确定要删除该用户吗" @confirm="removeUser(scope.row.id)">
             <template #reference>
-              <el-button :icon="Delete" slot="reference" type="text" style="color: #f56c6c; margin-left: 30px">
+              <el-button :icon="Delete" type="text" style="color: #f56c6c; margin-left: 30px">
                 删除
               </el-button>
             </template>
