@@ -50,7 +50,7 @@
             </el-table-column>
           </el-table>
         </div>
-        <div style="display: flex; align-items: flex-start; height: 8%">
+        <div>
           <el-pagination :current-page="pagination.page" :page-sizes="[10, 15, 20, 30]" :page-size="pagination.pageSize"
             layout="total, sizes, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange"
             @current-change="handlePageChange" />
@@ -58,7 +58,7 @@
       </el-col>
     </el-row>
     <!-- :department-list="departmentList" -->
-    <comment-tag-modal :comment-tag-id="currentDimensionId" :is-update="isUpdate" :modal-visible="modelVisible"
+    <FormModel :comment-tag-id="currentDimensionId" :is-update="isUpdate" :visible="modelVisible"
       @success="handleSuccess" @close="handleClose" />
   </div>
 </template>
@@ -68,6 +68,7 @@ import { commentTagsListApi, deleteCommentTagApi } from '@/apis/commentTags'
 import { ElMessage } from 'element-plus'
 import { onMounted, ref } from 'vue'
 import { Edit, Delete, InfoFilled, CirclePlus } from '@element-plus/icons-vue'
+import FormModel from './components/formModel.vue'
 
 const pagination = ref({
   page: 1,
@@ -79,7 +80,7 @@ const isUpdate = ref(false)
 const commentTagList = ref<commentTagListItem[]>([])
 const total = ref(0)
 const modelVisible = ref(false)
-const currentDimensionId = ref<string | null>('')
+const currentDimensionId = ref<string>('')
 
 const loadList = async () => {
   loading.value = true
@@ -90,8 +91,8 @@ const loadList = async () => {
     state: String(state)
   })
   if (res.code === 200) {
-    const { totalData, list } = res.data
-    total.value = totalData as number
+    const { total: totalData, list } = res.data
+    total.value = Number(totalData)
     const typedList = list as commentTagListItem[]
     commentTagList.value = typedList
   }
@@ -143,9 +144,10 @@ const handleSuccess = async () => {
 }
 
 const openModel = (dimensionId: string | null, isUpdateParams: boolean = false) => {
-  currentDimensionId.value = dimensionId
+  currentDimensionId.value = dimensionId ?? ''
   isUpdate.value = isUpdateParams
   modelVisible.value = true
+  console.log(modelVisible.value)
 }
 
 onMounted(async () => {

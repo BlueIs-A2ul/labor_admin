@@ -151,7 +151,6 @@ const handleRole = async (row: any) => {
   userId.value = row.id
   selectRoles.value = row.roleIds
   selectedRolesCopy.value = JSON.parse(JSON.stringify(row.roleIds))
-  console.log('selectRoles', selectRoles.value)
   dialogVisible.value = true
 }
 
