@@ -20,6 +20,7 @@ export const useDepartmentStore = defineStore('department', () => {
     } catch (error) {
       console.log(error)
     }
+    return []
   }
 
   return {

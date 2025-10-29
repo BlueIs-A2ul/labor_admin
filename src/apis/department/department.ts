@@ -7,6 +7,7 @@ import type {
   UpdateDepartmentRes,
   PageDepartmentRes,
 } from '@/types/apis/department'
+import type { ResponseData } from '@/types/apis/role'
 
 const MODEL_BASE_URL = '/user/department'
 const API = {
@@ -44,7 +45,7 @@ export default {
    * @param {Number} id 被删除学院的id
    * @returns
    */
-  async deleteDepartment(id: number) {
+  async deleteDepartment(id: number): Promise<ResponseData> {
     return await request({
       url: `${MODEL_BASE_URL}/${id}`,
       method: 'DELETE',

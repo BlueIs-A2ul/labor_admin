@@ -3,6 +3,8 @@ import request from '@/utils/request'
 
 export type ClearableObject = Record<string, any>
 
+export const uploadUrl = import.meta.env.VITE_VUE_APP_BASE_API + '/user/file/upload'
+
 /**
  * 递归清空对象的value
  * @param obj 传入一个地址

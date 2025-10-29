@@ -4,11 +4,11 @@
       :close-on-click-modal="false" :close-on-press-escape="false">
       <div v-loading="loading">
         <el-form ref="formRef" :model="commentTag" label-position="left" :rules="rules">
-          <el-form-item label="建议维度" prop="name">
+          <el-form-item class="el-select" label="建议维度" prop="name">
             <el-input v-model.trim="commentTag.name" autocomplete="off" style="width: 400px" placeholder="建议不超过五个字" />
           </el-form-item>
-          <el-form-item label="提示用语" prop="description">
-            <el-input v-model.trim="commentTag.description" :rows="5" type="textarea" autosize autocomplete="off"
+          <el-form-item class="el-select" label="提示用语" prop="description">
+            <el-input v-model.trim="commentTag.description" :rows="5" type="textarea" autocomplete="off"
               style="width: 400px" placeholder="帮助学生尽快了解该维度的意义" />
           </el-form-item>
         </el-form>
@@ -149,6 +149,11 @@ const handleSuccess = () => {
 
 <style scoped lang="scss">
 :deep(.el-select) {
+  width: max-content;
+  min-width: 400px;
+}
+
+.el-select {
   width: max-content;
   min-width: 400px;
 }
