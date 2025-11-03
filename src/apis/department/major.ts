@@ -1,8 +1,9 @@
+import type { ResponseData } from '@/types/apis/role'
 import request from '@/utils/request'
 const MODEL_BASE_URL = '/user/major'
 
 const API = {
-  PAGE: `${MODEL_BASE_URL}/page`
+  PAGE: `${MODEL_BASE_URL}/page`,
 }
 /**
  * 新增
@@ -11,7 +12,10 @@ const API = {
  * @param {string} major.majorName
  * @returns
  */
-export function saveMajor(major) {
+export function saveMajor(major: {
+  departmentId: string
+  majorName: string
+}): Promise<ResponseData> {
   return request.post(`${MODEL_BASE_URL}`, major)
 }
 /**
@@ -22,7 +26,11 @@ export function saveMajor(major) {
  * @param {string} major.majorName
  * @returns
  */
-export function updateMajor(major) {
+export function updateMajor(major: {
+  id: string
+  departmentId: string
+  majorName: string
+}): Promise<ResponseData> {
   return request.put(`${MODEL_BASE_URL}`, major)
 }
 /**
@@ -30,7 +38,7 @@ export function updateMajor(major) {
  * @param {string} id 主键
  * @returns
  */
-export function getMajor(id) {
+export function getMajor(id: string): Promise<ResponseData> {
   return request.get(`${MODEL_BASE_URL}/${id}`)
 }
 /**
@@ -38,7 +46,7 @@ export function getMajor(id) {
  * @param {string} id 主键
  * @returns
  */
-export function deleteMajor(id) {
+export function deleteMajor(id: string): Promise<ResponseData> {
   return request.delete(`${MODEL_BASE_URL}/${id}`)
 }
 
@@ -52,11 +60,14 @@ export function deleteMajor(id) {
  * @param {number} params.page
  * @param {number} params.pageSize
  */
-export function majorPage(params, {departmentList = []}) {
-
-  return request.post(
-    API.PAGE, 
-    [...departmentList],
-      { params }
-    )
+export function majorPage(
+  params: {
+    departmentId: string | number
+    key: string
+    pageNum: number | string
+    pageSize: number | string
+  },
+  { departmentList = [] },
+): Promise<ResponseData> {
+  return request.post(API.PAGE, [...departmentList], { params })
 }

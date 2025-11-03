@@ -1,14 +1,14 @@
-import rq from '@/apis/department/department'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { DepartmentListType } from '@/types/apis/department'
+import { getDepartmentList } from '@/apis/department/department'
 
 export const useDepartmentStore = defineStore('department', () => {
   const department = ref<DepartmentListType[]>([])
 
   const init = async () => {
     try {
-      const res = await rq.getDepartmentList('', 1, 100)
+      const res = await getDepartmentList('', 1, 100)
       if (res.code === 200) {
         const { list } = res.data as { list: DepartmentListType[] }
 

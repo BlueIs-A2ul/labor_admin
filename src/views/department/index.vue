@@ -129,14 +129,14 @@
 
 <script setup lang="ts">
 import { isArrEqual } from '@/apis/common'
-import rq from '@/apis/department/department'
 import { computed, onMounted, ref } from 'vue'
 import { useDepartmentStore } from '@/stores/department'
 import type { DepartmentListType } from '@/types/apis/department'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, type UploadFile } from 'element-plus'
 import { Edit, Delete, CirclePlus, Plus } from '@element-plus/icons-vue'
 import { uploadUrl } from '@/apis/common'
 import logo from '@/assets/swpu_LOGO/logo_blue.jpg'
+import { createDepartment, deleteDepartment, updateDepartment } from '@/apis/department/department'
 
 const departmentStore = useDepartmentStore()
 const list = ref<DepartmentListType[]>([])
@@ -203,7 +203,7 @@ const del = async (id: string) => {
       }
     )
 
-    const res = await rq.deleteDepartment(Number(id))
+    const res = await deleteDepartment(Number(id))
     if (res.code === 200) {
       if (pageParam.value.pageNum > 1 && list.value.length === 1) {
         pageParam.value.pageNum--
@@ -259,7 +259,7 @@ const submit = async () => {
   }
   if (!isUpdate.value) {
     try {
-      const res = await rq.createDepartment(submitForm)
+      const res = await createDepartment(submitForm)
       if (res.code === 200) {
         ElMessage.success('学院创建成功')
         dialogVisible.value = false
@@ -277,7 +277,7 @@ const submit = async () => {
   else {
     const submitForm = JSON.parse(JSON.stringify(form.value))
     submitForm.id = choseId.value
-    const res = await rq.updateDepartment(submitForm)
+    const res = await updateDepartment(submitForm)
     if (res.code === 200) {
       ElMessage.success('学院修改成功')
       dialogVisible.value = false
@@ -304,16 +304,16 @@ const handlePageChange = async (newPage: number) => {
   pageParam.value.pageNum = newPage
 }
 
-const handleRemove = (file, fileList) => {
+const handleRemove = (file: UploadFile, fileList: UploadFile[]) => {
   hasCover.value = false
   form.value.departmentCover = ''
 }
 
-const handleChange = (file, fileList) => {
+const handleChange = (file: UploadFile, fileList: UploadFile[]) => {
   hasCover.value = fileList.length > 0
 }
 
-const handleSuccess = (res, file) => {
+const handleSuccess = (res: any, file: UploadFile) => {
   if (res.code === 200) {
     form.value.departmentCover = res.data
     hasCover.value = true
@@ -323,7 +323,7 @@ const handleSuccess = (res, file) => {
   }
 }
 
-const removeAlias = (alias) => {
+const removeAlias = (alias: { value: string }) => {
   const index = form.value.alias.indexOf(alias)
   if (index !== -1) {
     form.value.alias.splice(index, 1)
