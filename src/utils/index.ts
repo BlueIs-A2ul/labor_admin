@@ -288,19 +288,93 @@ export function debounce(func, wait, immediate) {
  * @param {Object} source
  * @returns {Object}
  */
-export function deepClone(source) {
-  if (!source && typeof source !== 'object') {
-    throw new Error('error arguments', 'deepClone')
+export function deepClone<T extends object>(source: T): T {
+  // 参数类型检查
+  if (source === null || typeof source !== 'object') {
+    throw new Error('deepClone: 传入参数必须是对象或数组')
   }
-  const targetObj = source.constructor === Array ? [] : {}
-  Object.keys(source).forEach((keys) => {
-    if (source[keys] && typeof source[keys] === 'object') {
-      targetObj[keys] = deepClone(source[keys])
-    } else {
-      targetObj[keys] = source[keys]
+
+  // 使用WeakMap存储已克隆对象，防止循环引用
+  const clonedMap = new WeakMap<object, any>()
+
+  // 内部递归函数
+  function clone(source: any): any {
+    // 非对象直接返回
+    if (source === null || typeof source !== 'object') {
+      return source
     }
-  })
-  return targetObj
+
+    // 检查循环引用
+    if (clonedMap.has(source)) {
+      return clonedMap.get(source)
+    }
+
+    let target: any
+
+    // 处理特殊对象类型
+    // Date对象
+    if (source instanceof Date) {
+      return new Date(source.getTime())
+    }
+
+    // RegExp对象
+    if (source instanceof RegExp) {
+      return new RegExp(source.source, source.flags)
+    }
+
+    // Map对象
+    if (source instanceof Map) {
+      target = new Map()
+      clonedMap.set(source, target)
+      source.forEach((value, key) => {
+        target.set(key, clone(value))
+      })
+      return target
+    }
+
+    // Set对象
+    if (source instanceof Set) {
+      target = new Set()
+      clonedMap.set(source, target)
+      source.forEach((value) => {
+        target.add(clone(value))
+      })
+      return target
+    }
+
+    // 处理数组
+    if (Array.isArray(source)) {
+      target = []
+      clonedMap.set(source, target)
+
+      for (let i = 0; i < source.length; i++) {
+        target[i] = clone(source[i])
+      }
+    }
+    // 处理普通对象
+    else {
+      // 使用Object.create保留原型链
+      target = Object.create(Object.getPrototypeOf(source))
+      clonedMap.set(source, target)
+
+      // 遍历所有可枚举属性
+      for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = clone(source[key])
+        }
+      }
+
+      // 处理Symbol属性
+      const symbolKeys = Object.getOwnPropertySymbols(source)
+      for (const symbolKey of symbolKeys) {
+        target[symbolKey] = clone(source[symbolKey])
+      }
+    }
+
+    return target
+  }
+
+  return clone(source) as T
 }
 
 /**

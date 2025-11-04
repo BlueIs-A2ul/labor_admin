@@ -62,12 +62,12 @@ export function deleteMajor(id: string): Promise<ResponseData> {
  */
 export function majorPage(
   params: {
-    departmentId: string | number
-    key: string
+    departmentId?: string | number
+    key?: string
     pageNum: number | string
     pageSize: number | string
   },
-  { departmentList = [] },
+  { departmentList = [] }: { departmentList: any[] },
 ): Promise<ResponseData> {
   return request.post(API.PAGE, [...departmentList], { params })
 }

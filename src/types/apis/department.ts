@@ -39,3 +39,16 @@ export interface DepartmentListType {
   isDeleted: number
   updateBy: string | null
 }
+
+export interface MajorItemParams {
+  classes: string
+  createBy: string
+  departmentId: string
+  department: string
+  gmtCreate: string
+  gmtModified: string
+  id: string
+  isDeleted: number
+  majorName: string
+  updateBy: string
+}
