@@ -15,7 +15,7 @@ export const useUserStore = defineStore(
     const departmentId = ref('')
     const departmentName = ref('')
     const roles = ref([])
-    const userPermissions = ref([])
+    const userPermissions = ref<string[]>([])
     const defaultAvatar = ref(
       'https://guli-fate.oss-cn-chengdu.aliyuncs.com/2023/08/15/3f176dd8-1d87-4707-9033-e557ef824430.png',
     )
@@ -42,7 +42,7 @@ export const useUserStore = defineStore(
           username: username.trim(),
           password: password,
         })
-        const { data } = response
+        const { data } = response as unknown as { data: string }
         token.value = data
         setToken(data)
         return response
@@ -62,6 +62,7 @@ export const useUserStore = defineStore(
         }
 
         const { permissions, userInfo } = data
+        console.log(data)
 
         if (!permissions || permissions.length <= 0) {
           throw new Error('getInfo:roles must be a non-null array!')

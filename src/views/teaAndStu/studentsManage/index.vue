@@ -29,17 +29,18 @@
         </el-row>
       </div>
       <div class="buttons">
-        <el-button v-permission="['user.student.add']" type="primary" icon="el-icon-circle-plus-outline"
+        <el-button v-permission="['user.student.add']" type="primary" :icon="CirclePlus"
           @click="handleCreate">添加学生</el-button>
-        <el-button v-permission="['user.student.add']" type="success" icon="el-icon-s-grid"
+        <el-button v-permission="['user.student.add']" type="success" :icon="Grid"
           @click="uploadDialogVisible = true">导入学生Excel</el-button>
       </div>
     </div>
 
     <div v-loading="loading" class="students-list">
       <el-table :data="studentList" stripe border height="100%" style="width: 100%"
-        :row-style="{ minHeight: 50 + 'px', height: 'auto' }" :cell-style="{ padding: 5 + 'px' }">
-        <el-table-column label="序号" width="50" align="center">
+        :header-cell-style="{ height: '60px', padding: '0' }" :row-style="{ minHeight: 50 + 'px', height: 'auto' }"
+        :cell-style="{ padding: 5 + 'px' }">
+        <el-table-column label="序号" width="60" align="center">
           <template #default="scope">
             <div>
               {{ scope.$index + 1 }}
@@ -47,19 +48,22 @@
           </template>
         </el-table-column>
         <el-table-column prop="name" label="姓名" min-width="60" align="center" />
-        <el-table-column prop="studentId" label="学号" min-width="50" align="center" />
+        <el-table-column prop="studentId" label="学号" min-width="70" align="center" />
         <el-table-column prop="major" label="专业" align="center" />
         <el-table-column prop="department" min-width="80" label="学院" align="center">
-          <el-tag #default="scope">{{ scope.row.department }}</el-tag>
+          <template #default="scope">
+            <el-tag>{{ scope.row.department }}</el-tag>
+          </template>
         </el-table-column>
         <el-table-column prop="sex" label="性别" min-width="50" align="center">
           <template #default="scope">
-            <el-tag v-if="scope.row.sex == 1" size="medium">男</el-tag>
-            <el-tag v-else-if="scope.row.sex == 0" size="medium" type="danger">女</el-tag>
+            <el-tag v-if="scope.row.sex === 1">男</el-tag>
+            <el-tag v-else-if="scope.row.sex === 0" type="danger">女</el-tag>
             <span v-else>未设置</span>
           </template>
         </el-table-column>
-        <el-table-column prop="currentGrade" label="当前年级" sortable="custom" min-width="60" align="center">
+        <!-- TODO sortable="custom" 排序但是没用，后面可以补 -->
+        <el-table-column prop="currentGrade" label="当前年级" min-width="60" align="center">
           <template #default="scope">
             {{
               scope.row.currentGrade ? scope.row.currentGrade + "级" : "暂无"
@@ -79,7 +83,7 @@
             <div>
               <el-popover placement="right" width="350" title="联系方式" trigger="click">
                 <div style="display: flex; flex-direction: column">
-                  <div v-for="(value, key, index) in scope.row.contact" :key="index" style="
+                  <div v-for="(entry, index) in Object.entries(scope.row.contact)" :key="index" style="
                       display: flex;
                       flex-direction: row;
                       justify-content: space-between;
@@ -92,19 +96,20 @@
                         border-left: 4px solid #409eff;
                         padding-left: 8px;
                       ">
-                      {{ key }}
+                      {{ entry[0] }}
                     </div>
                     <div style="width: 70%">
-                      {{ value == "" ? "暂无" : value }}
+                      {{ entry[1] || '暂无' }}
                     </div>
                   </div>
                 </div>
-                <el-button slot="reference" type="text">查看</el-button>
+                <template #reference>
+                  <el-button type="text">查看</el-button>
+                </template>
               </el-popover>
             </div>
           </template>
         </el-table-column>
-        <!-- 操作列 -->
         <el-table-column v-if="
           ['user.student.update', 'user.student.delete'].some((p) =>
             userPermissions.includes(p)
@@ -112,13 +117,15 @@
         " label="操作" min-width="80" align="center">
           <template #default="scope">
             <div class="buttons">
-              <el-button v-permission="['user.student.update']" type="text" style="color: #409eff"
-                icon="el-icon-edit-outline" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button v-permission="['user.student.update']" type="text" style="color: #409eff" :icon="Edit"
+                @click="handleUpdate(scope.row)">修改</el-button>
               <el-popconfirm confirm-button-text="确定删除" cancel-button-text="取消" confirm-button-type="danger"
                 icon="el-icon-info" icon-color="red" :title="`确认删除学生${scope.row.name}吗?`"
                 @confirm="handleDel(scope.row.id)">
-                <el-button slot="reference" v-permission="['user.student.delete']" style="color: #f56c6c" type="text"
-                  icon="el-icon-delete">删除</el-button>
+                <template #reference>
+                  <el-button v-permission="['user.student.delete']" style="color: #f56c6c" type="text"
+                    :icon="Delete">删除</el-button>
+                </template>
               </el-popconfirm>
             </div>
           </template>
@@ -132,19 +139,25 @@
       </div>
     </div>
 
-    <el-dialog v-permission="['user.student.add']" title="学生信息导入" :visible.sync="uploadDialogVisible" width="30%"
-      :before-close="handleClose" :close-on-click-modal="false" :close-on-press-escape="false" center accept="xlsx">
+    <el-dialog v-permission="['user.student.add']" title="学生信息导入" v-model="uploadDialogVisible" width="30%"
+      :before-close="handleUploadClose" :close-on-click-modal="false" :close-on-press-escape="false" center
+      accept="xlsx">
       <div style="display: flex; flex-direction: column; align-items: center">
-        <el-upload drag :action="uploadUrl" :show-file-list="false" :http-request="handelUpload" multiple>
-          <i class="el-icon-upload" />
+        <el-upload drag :action="uploadUrl" :show-file-list="false" :http-request="handelUpload" multiple
+          style="width: 22.5rem">
+          <el-icon style="font-size: 80px; color: #409eff">
+            <UploadFilled />
+          </el-icon>
           <div class="el-upload__text">
             将文件拖到此处自动上传, 或<em>点击上传</em>
           </div>
-          <div slot="tip" class="el-upload__tip" style="color: red; margin-top: 10px">
-            只能上传xlsx文件, 上传过程不可逆
-          </div>
+          <template #tip>
+            <div class="el-upload__tip" style="color: red; margin-top: 10px">
+              只能上传xlsx文件, 上传过程不可逆
+            </div>
+          </template>
         </el-upload>
-        <span slot="footer" class="dialog-footer" style="
+        <span class="dialog-footer" style="
             width: 150px;
             margin-top: 30px;
             display: flex;
@@ -157,8 +170,8 @@
       </div>
     </el-dialog>
 
-    <StudentModal v-permission="['user.student.add', 'user.student.update']" :dialog-table-visible="dialogTableVisible"
-      :student="currentStudent" :is-update="isUpdate" />
+    <StudentModel v-permission="['user.student.add', 'user.student.update']" :visible="dialogTableVisible"
+      :student="currentStudent" :isUpdate="isUpdate" @handleClose="handleClose" @loadList="loadList" />
   </div>
 </template>
 
@@ -174,6 +187,8 @@ import type { StudentParams } from '@/types/apis/student'
 import type { MajorItemParams } from '@/types/apis/department'
 import { handleDownload } from '@/utils/file'
 import { uploadUrl } from '@/apis/student'
+import StudentModel from './studentModel.vue'
+import { CirclePlus, Delete, Edit, Grid } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const departmentStore = useDepartmentStore()
@@ -183,10 +198,10 @@ const uploadDialogVisible = ref(false)
 const keyWords = ref('')
 const total = ref(1)
 const page = ref(1)
-const pageSize = ref(10)
-const departmentId = ref('')
+const pageSize = ref(20)
+const departmentId = ref<string | null>('')
 const majorId = ref<string | null>('')
-const currentStudent = ref({})
+const currentStudent = ref<StudentParams>({})
 const dialogTableVisible = ref(false)
 const isUpdate = ref(false)
 const loading = ref(false)
@@ -202,7 +217,7 @@ const department = computed(() => departmentStore.department)
 const userPermissions = computed(() => userStore.userPermissions)
 const userDepartmentId = computed(() => userStore.departmentId)
 const selectDepartment = computed(() => {
-  let res = []
+  let res = <{ text: string, value: string }[]>[]
   if (department.value) {
     const departmentList = deepClone(department.value)
     res = departmentList.filter(e => Number(e.id) > 1).map(e => {
@@ -216,7 +231,6 @@ const selectDepartment = computed(() => {
       text: '全部'
     })
   }
-  console.log(res)
   return res
 })
 const checkRole = computed(() => {
@@ -259,7 +273,7 @@ const loadList = async () => {
     key: keyWords.value,
     pageNum: String(page.value),
     pageSize: String(pageSize.value),
-    departmentId: departmentId.value,
+    departmentId: departmentId.value ?? '',
     majorId: majorId.value ?? ''
   })
   if (res.code === 200) {
@@ -277,6 +291,7 @@ const loadList = async () => {
     studentList.value = data.list
     total.value = Number(data.total)
   }
+  loading.value = false
 }
 
 const handleCreate = () => {
@@ -295,7 +310,7 @@ const handleCurrentChange = (newPage: number) => {
   loadList()
 }
 
-const handleUpdate = (row) => {
+const handleUpdate = (row: {}) => {
   isUpdate.value = true
   currentStudent.value = row
   dialogTableVisible.value = true
@@ -305,7 +320,11 @@ const handleClose = () => {
   dialogTableVisible.value = false
 }
 
-const handleDel = async (row) => {
+const handleUploadClose = () => {
+  uploadDialogVisible.value = false
+}
+
+const handleDel = async (row: string) => {
   const res = await deleteStudent(row)
   if (res.code === 200) {
     if (page.value > 1 && studentList.value.length === 1) {
@@ -326,7 +345,7 @@ const reset = () => {
   loadList()
 }
 
-const handelUpload = async (params) => {
+const handelUpload = async (params: { file: File }) => {
   const res = await uploadStu(params.file)
   if (res.code === 200) {
     ElMessage.success('上传成功')
@@ -340,7 +359,7 @@ const handleUpdateOver = async () => {
   await loadList()
 }
 
-const filterChange = async (val) => {
+const filterChange = async (val: { chosenDepartment: string[] }) => {
   departmentId.value = typeof val === 'undefined' ? null : val.chosenDepartment[0]
   page.value = 1
   await loadList()

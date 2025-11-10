@@ -11,16 +11,16 @@
         </el-form-item>
         <el-form-item label="联系方式">
           <el-input placeholder="请输入内容" v-model="teacherInfo.contact.电话" style="width: 80%; margin-bottom: 10px;">
-            <template slot="prepend">电话 </template>
+            <template #prepend>电话 </template>
           </el-input>
           <el-input placeholder="请输入内容" v-model="teacherInfo.contact.邮箱" style="width: 80%; margin-bottom: 10px;">
-            <template slot="prepend">邮箱 </template>
+            <template #prepend>邮箱 </template>
           </el-input>
           <el-input placeholder="请输入内容" v-model="teacherInfo.contact.QQ" style="width: 80%; margin-bottom: 10px;">
-            <template slot="prepend">QQ </template>
+            <template #prepend>QQ </template>
           </el-input>
           <el-input placeholder="请输入内容" v-model="teacherInfo.contact.微信" style="width: 80%">
-            <template slot="prepend">微信 </template>
+            <template #prepend>微信 </template>
           </el-input>
         </el-form-item>
         <el-form-item label="性别">

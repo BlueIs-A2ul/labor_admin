@@ -1,1 +1,8 @@
-// 导出所有类型，方便统一导入
+export interface MajorItem {
+  classes: string
+  departmentId: string
+  department: string
+  id: string
+  isDeleted: boolean
+  majorName: string
+}
