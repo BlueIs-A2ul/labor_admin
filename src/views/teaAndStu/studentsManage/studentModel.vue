@@ -22,8 +22,9 @@
             </el-form-item>
             <el-form-item label="学院">
               <el-select v-model="studentInfo.departmentId" placeholder="请选择学院" style="width: 80%"
-                @change="loadMajorSelect" :disabled="checkRole">
-                <el-option v-for="item in department" :key="item.id" :label="item.departmentName" :value="item.id" />
+                @change="loadMajorSelect()" :disabled="checkRole">
+                <el-option v-for="item in department" :key="item.id" :label="item.departmentName"
+                  :value="item.departmentName" />
               </el-select>
             </el-form-item>
             <el-form-item label="专业">
@@ -48,16 +49,16 @@
             </el-form-item>
             <el-form-item label="联系方式">
               <el-input v-model="studentInfo.contact['电话']" placeholder="请输入内容" style="width: 80%; margin-bottom: 10px">
-                <template slot="prepend">电话 </template>
+                <template #prepend>电话 </template>
               </el-input>
               <el-input v-model="studentInfo.contact['邮箱']" placeholder="请输入内容" style="width: 80%; margin-bottom: 10px">
-                <template slot="prepend">邮箱 </template>
+                <template #prepend>邮箱 </template>
               </el-input>
               <el-input v-model="studentInfo.contact['QQ']" placeholder="请输入内容" style="width: 80%; margin-bottom: 10px">
-                <template slot="prepend">QQ </template>
+                <template #prepend>QQ </template>
               </el-input>
               <el-input v-model="studentInfo.contact['微信']" placeholder="请输入内容" style="width: 80%">
-                <template slot="prepend">微信 </template>
+                <template #prepend>微信 </template>
               </el-input>
             </el-form-item>
             <el-form-item label="学籍状态">
@@ -82,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useDepartmentStore } from '@/stores/department'
 import { majorPage } from '@/apis/department/major'
@@ -109,11 +110,11 @@ const studentInfo = ref({
   studentId: '',
   majorId: '',
   name: '',
-  currentGrade: '',
+  currentGrade: null,
   sex: 1,
   departmentId: '',
-  enrollmentYear: {},
-  birth: {},
+  enrollmentYear: '',
+  birth: '',
   campus: 0,
   state: 1,
   contact: {
@@ -138,10 +139,29 @@ const checkRole = computed(() => {
   return false
 })
 
+const loadMajorSelect = async () => {
+  console.log('loadMajorSelect')
+  const res = await majorPage({
+    pageNum: 1,
+    pageSize: 100,
+  }, {
+    departmentList: [studentInfo.value.departmentId]
+  })
+
+  if (res.code === 200) {
+    const { data } = res as unknown as { data: { list: MajorItem[] } }
+    majorSelect.value = data.list
+  } else {
+    ElMessage.error('加载失败')
+  }
+}
+
 watch(props.student, async (newValue) => {
+  console.log('newValue', newValue)
   const flag = Object.keys(newValue).length
   if (flag !== 0) {
     studentInfo.value = JSON.parse(JSON.stringify(newValue))
+    console.log('studentInfo.value', studentInfo.value)
     props.student.sex === 1 ? sex.value = '男' : sex.value = '女'
     copy.value = JSON.stringify(newValue)
     const department = departmentStore.department.find(e => e.id === String(newValue.departmentId))
@@ -152,11 +172,11 @@ watch(props.student, async (newValue) => {
       studentId: '',
       name: "",
       sex: 1,
-      birth: {},
+      birth: '',
       departmentId: '',
-      enrollmentYear: {},
+      enrollmentYear: '',
       state: 1,
-      currentGrade: '',
+      currentGrade: null,
       campus: 0,
       majorId: '',
       contact: {
@@ -170,6 +190,8 @@ watch(props.student, async (newValue) => {
     sex.value = ''
     copy.value = null
   }
+}, {
+  immediate: true
 })
 
 watch(departmentName, async (newValue) => {
@@ -192,17 +214,38 @@ watch(sex, async (newValue) => {
   immediate: true
 })
 
-const loadMajorSelect = async () => {
-  const res = await majorPage({
-    pageNum: 1,
-    pageSize: 100,
-  }, {
-    departmentList: [studentInfo.value.departmentId]
-  })
-
-  if (res.code === 200) {
-    const { data } = res as unknown as { data: { list: MajorItem[] } }
-    majorSelect.value = data.list
+const updateStudentForm = async () => {
+  const flag = Object.keys(props.student).length
+  if (flag !== 0) {
+    studentInfo.value = JSON.parse(JSON.stringify(props.student))
+    console.log('studentInfo.value', studentInfo.value)
+    props.student.sex === 1 ? sex.value = '男' : sex.value = '女'
+    copy.value = JSON.stringify(props.student)
+    const department = departmentStore.department.find(e => e.id === String(props.student.departmentId))
+    departmentName.value = department ? department.departmentName : '暂无学院'
+    await loadMajorSelect()
+  } else {
+    studentInfo.value = {
+      studentId: '',
+      name: "",
+      sex: 1,
+      birth: '',
+      departmentId: '',
+      enrollmentYear: '',
+      state: 1,
+      currentGrade: null,
+      campus: 0,
+      majorId: '',
+      contact: {
+        电话: "",
+        邮箱: "",
+        QQ: "",
+        微信: "",
+      },
+    }
+    departmentName.value = ''
+    sex.value = ''
+    copy.value = null
   }
 }
 
@@ -232,6 +275,8 @@ const handleCreate = async () => {
     ElMessage.success('添加成功')
     await close()
     emits('loadList')
+  } else {
+    ElMessage.error('添加失败')
   }
 }
 
@@ -246,6 +291,10 @@ const handleUpdate = async () => {
     emits('loadList')
   }
 }
+
+onMounted(() => {
+  updateStudentForm()
+})
 </script>
 
 <style scoped></style>

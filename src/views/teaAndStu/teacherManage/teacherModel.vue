@@ -1,5 +1,6 @@
 <template>
   <div class="container">
+    <!-- TODO 这个部分要重写 抄错代码了 -->
     <el-dialog title="教师信息" :model-value="dialogTableVisible" width="30%" :close-on-click-modal="false"
       :before-close="close">
       <el-form :model="teacherInfo" label-width="80px">
@@ -24,8 +25,7 @@
           </el-input>
         </el-form-item>
         <el-form-item label="性别">
-          <el-select placeholder="请选择性别" v-model="teacherInfo.sex"
-            :value="teacherInfo.sex === '1' ? '男' : `${teacherInfo.sex === '0' ? '女' : ''}`" style="width: 80%;">
+          <el-select placeholder="请选择性别" v-model="teacherInfo.sex" style="width: 80%;">
             <el-option label="男" value="1" />
             <el-option label="女" value="0" />
           </el-select>

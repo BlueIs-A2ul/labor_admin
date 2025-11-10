@@ -74,7 +74,7 @@
           <template #default="scope">
             <el-tag v-if="scope.row.campus === '南充'" color="success">{{
               scope.row.campus
-              }}</el-tag>
+            }}</el-tag>
             <el-tag v-else>{{ scope.row.campus }}</el-tag>
           </template>
         </el-table-column>
@@ -120,7 +120,7 @@
               <el-button v-permission="['user.student.update']" type="text" style="color: #409eff" :icon="Edit"
                 @click="handleUpdate(scope.row)">修改</el-button>
               <el-popconfirm confirm-button-text="确定删除" cancel-button-text="取消" confirm-button-type="danger"
-                icon="el-icon-info" icon-color="red" :title="`确认删除学生${scope.row.name}吗?`"
+                :icon="InfoFilled" icon-color="red" :title="`确认删除学生${scope.row.name}吗?`"
                 @confirm="handleDel(scope.row.id)">
                 <template #reference>
                   <el-button v-permission="['user.student.delete']" style="color: #f56c6c" type="text"
@@ -176,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useDepartmentStore } from '@/stores/department'
 import { deepClone } from '@/utils'
@@ -188,7 +188,7 @@ import type { MajorItemParams } from '@/types/apis/department'
 import { handleDownload } from '@/utils/file'
 import { uploadUrl } from '@/apis/student'
 import StudentModel from './studentModel.vue'
-import { CirclePlus, Delete, Edit, Grid } from '@element-plus/icons-vue'
+import { CirclePlus, Delete, Edit, Grid, InfoFilled } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const departmentStore = useDepartmentStore()
@@ -313,7 +313,10 @@ const handleCurrentChange = (newPage: number) => {
 const handleUpdate = (row: {}) => {
   isUpdate.value = true
   currentStudent.value = row
-  dialogTableVisible.value = true
+  console.log('currentStudent', currentStudent.value)
+  nextTick(() => {
+    dialogTableVisible.value = true
+  })
 }
 
 const handleClose = () => {

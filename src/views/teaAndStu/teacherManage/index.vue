@@ -12,7 +12,7 @@
         </div>
       </div>
       <div class="buttons">
-        <el-button type="primary" icon="el-icon-circle-plus-outline" @click="handleCreate">添加教师</el-button>
+        <el-button type="primary" :icon="CirclePlus" @click="handleCreate">添加教师</el-button>
       </div>
     </div>
 
@@ -62,7 +62,7 @@
           <template v-slot="scope">
             <div class="buttons">
               <el-button type="primary" size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-popconfirm confirm-button-text="好的" cancel-button-text="不用了" icon="el-icon-info" icon-color="red"
+              <el-popconfirm confirm-button-text="好的" cancel-button-text="不用了" :icon="InfoFilled" icon-color="red"
                 :title="`确认删除${scope.row.name}吗?`" @onConfirm="handleDel(scope.row.id)">
                 <template #reference>
                   <el-button type="danger" size="small">删除</el-button>
@@ -89,6 +89,7 @@ import { deleteTeacher, teacherListApi } from '@/apis/teacher'
 import { ElMessage } from 'element-plus'
 import { computed, onMounted, ref, watch } from 'vue'
 import TeacherModel from './teacherModel.vue'
+import { CirclePlus, InfoFilled } from '@element-plus/icons-vue'
 
 const isUpdate = ref(true)
 const dialogTableVisible = ref(false)
