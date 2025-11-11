@@ -6,3 +6,14 @@ export interface MajorItem {
   isDeleted: boolean
   majorName: string
 }
+
+export interface SemesterItem {
+  id: string
+  departmentId: string
+  end: string
+  start: string
+  grade: string
+  isDeleted: boolean
+  majorId: string
+  semesterName: string
+}
