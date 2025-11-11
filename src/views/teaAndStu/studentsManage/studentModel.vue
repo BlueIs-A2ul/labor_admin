@@ -23,8 +23,7 @@
             <el-form-item label="学院">
               <el-select v-model="studentInfo.departmentId" placeholder="请选择学院" style="width: 80%"
                 @change="loadMajorSelect()" :disabled="checkRole">
-                <el-option v-for="item in department" :key="item.id" :label="item.departmentName"
-                  :value="item.departmentName" />
+                <el-option v-for="item in department" :key="item.id" :label="item.departmentName" :value="item.id" />
               </el-select>
             </el-form-item>
             <el-form-item label="专业">
@@ -42,10 +41,10 @@
           </el-col>
           <el-col :span="11">
             <el-form-item label="出生日期">
-              <el-date-picker v-model="studentInfo.birth" type="date" placeholder="选择日期" format="yyyy-MM-dd" />
+              <el-date-picker v-model="studentInfo.birth" type="date" placeholder="选择日期" format="YYYY-MM-DD" />
             </el-form-item>
             <el-form-item label="入学日期">
-              <el-date-picker v-model="studentInfo.enrollmentYear" type="date" placeholder="选择日期" format="yyyy-MM-dd" />
+              <el-date-picker v-model="studentInfo.enrollmentYear" type="date" placeholder="选择日期" format="YYYY-MM-DD" />
             </el-form-item>
             <el-form-item label="联系方式">
               <el-input v-model="studentInfo.contact['电话']" placeholder="请输入内容" style="width: 80%; margin-bottom: 10px">
@@ -127,9 +126,9 @@ const studentInfo = ref({
 const departmentName = ref('')
 const copy = ref<any>(null)
 const sex = ref('')
+const department = ref<any>({})
 
 const updateDisabled = computed(() => copy.value === JSON.stringify(studentInfo.value))
-const department = computed(() => departmentStore.department)
 const userDepartmentId = computed(() => userStore.departmentId)
 const checkRole = computed(() => {
   if (userDepartmentId.value) {
@@ -156,73 +155,15 @@ const loadMajorSelect = async () => {
   }
 }
 
-watch(props.student, async (newValue) => {
-  console.log('newValue', newValue)
-  const flag = Object.keys(newValue).length
+const updateStudentForm = async (p: StudentParams) => {
+  const flag = Object.keys(p).length
   if (flag !== 0) {
-    studentInfo.value = JSON.parse(JSON.stringify(newValue))
+    studentInfo.value = JSON.parse(JSON.stringify(p))
     console.log('studentInfo.value', studentInfo.value)
-    props.student.sex === 1 ? sex.value = '男' : sex.value = '女'
-    copy.value = JSON.stringify(newValue)
-    const department = departmentStore.department.find(e => e.id === String(newValue.departmentId))
-    departmentName.value = department ? department.departmentName : '暂无学院'
-    await loadMajorSelect()
-  } else {
-    studentInfo.value = {
-      studentId: '',
-      name: "",
-      sex: 1,
-      birth: '',
-      departmentId: '',
-      enrollmentYear: '',
-      state: 1,
-      currentGrade: null,
-      campus: 0,
-      majorId: '',
-      contact: {
-        电话: "",
-        邮箱: "",
-        QQ: "",
-        微信: "",
-      },
-    }
-    departmentName.value = ''
-    sex.value = ''
-    copy.value = null
-  }
-}, {
-  immediate: true
-})
-
-watch(departmentName, async (newValue) => {
-  if (!newValue) {
-    return
-  }
-  if (newValue !== '暂无学院') {
-    studentInfo.value.departmentId = departmentStore.department.find(e => e.departmentName === newValue)?.id || ''
-  } else {
-    studentInfo.value.departmentId = '1'
-  }
-})
-
-watch(sex, async (newValue) => {
-  if (!newValue) {
-    return
-  }
-  newValue === '1' ? studentInfo.value.sex = 1 : studentInfo.value.sex = 0
-}, {
-  immediate: true
-})
-
-const updateStudentForm = async () => {
-  const flag = Object.keys(props.student).length
-  if (flag !== 0) {
-    studentInfo.value = JSON.parse(JSON.stringify(props.student))
-    console.log('studentInfo.value', studentInfo.value)
-    props.student.sex === 1 ? sex.value = '男' : sex.value = '女'
-    copy.value = JSON.stringify(props.student)
-    const department = departmentStore.department.find(e => e.id === String(props.student.departmentId))
-    departmentName.value = department ? department.departmentName : '暂无学院'
+    p.sex === 1 ? sex.value = '男' : sex.value = '女'
+    copy.value = JSON.stringify(p)
+    const departmentC = departmentStore.department.find(e => e.id === String(p.departmentId))
+    departmentName.value = departmentC ? departmentC.departmentName : '暂无学院'
     await loadMajorSelect()
   } else {
     studentInfo.value = {
@@ -248,6 +189,66 @@ const updateStudentForm = async () => {
     copy.value = null
   }
 }
+
+watch(() => props.student, async (newValue) => {
+  //使用()=> 解决watch监听对象属性变化不触发的问题
+  updateStudentForm(newValue)
+  // const flag = Object.keys(newValue).length
+  // if (flag !== 0) {
+  //   studentInfo.value = JSON.parse(JSON.stringify(newValue))
+  //   console.log('studentInfo.value', studentInfo.value)
+  //   props.student.sex === 1 ? sex.value = '男' : sex.value = '女'
+  //   copy.value = JSON.stringify(newValue)
+  //   const department = departmentStore.department.find(e => e.id === String(newValue.departmentId))
+  //   departmentName.value = department ? department.departmentName : '暂无学院'
+  //   await loadMajorSelect()
+  // } else {
+  //   studentInfo.value = {
+  //     studentId: '',
+  //     name: "",
+  //     sex: 1,
+  //     birth: '',
+  //     departmentId: '',
+  //     enrollmentYear: '',
+  //     state: 1,
+  //     currentGrade: null,
+  //     campus: 0,
+  //     majorId: '',
+  //     contact: {
+  //       电话: "",
+  //       邮箱: "",
+  //       QQ: "",
+  //       微信: "",
+  //     },
+  //   }
+  //   departmentName.value = ''
+  //   sex.value = ''
+  //   copy.value = null
+  // }
+}, {
+  immediate: true,
+  deep: true
+})
+
+watch(departmentName, async (newValue) => {
+  if (!newValue) {
+    return
+  }
+  if (newValue !== '暂无学院') {
+    studentInfo.value.departmentId = departmentStore.department.find(e => e.departmentName === newValue)?.id || ''
+  } else {
+    studentInfo.value.departmentId = '1'
+  }
+})
+
+watch(sex, async (newValue) => {
+  if (!newValue) {
+    return
+  }
+  newValue === '1' ? studentInfo.value.sex = 1 : studentInfo.value.sex = 0
+}, {
+  immediate: true
+})
 
 const resetPwd = async () => {
   if (!password.value) {
@@ -292,8 +293,16 @@ const handleUpdate = async () => {
   }
 }
 
-onMounted(() => {
-  updateStudentForm()
+const loadDepartmentList = async () => {
+  const list = await departmentStore.init()
+  department.value = list
+}
+
+onMounted(async () => {
+  // props.student
+  updateStudentForm(props.student)
+  loadMajorSelect()
+  loadDepartmentList()
 })
 </script>
 
