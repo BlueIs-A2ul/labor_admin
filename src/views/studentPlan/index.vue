@@ -37,7 +37,7 @@
                 <el-button type="text" style="color: #409eff" :icon="Edit"
                   @click="openForm('edit', scope.row)">编辑</el-button>
                 <el-popconfirm confirm-button-text="我已知晓风险, 确定删除" confirm-button-type="danger"
-                  cancel-button-text="放弃本次操作" icon="el-icon-info" icon-color="red"
+                  cancel-button-text="放弃本次操作" :icon="InfoFilled" icon-color="red"
                   title="确定要删除该学期吗, 若该目标正在使用, 删除后可能导致数据丢失" @confirm="handleDelete(scope.row)">
                   <template #reference>
                     <el-button :icon="Delete" type="text" style="color: #f56c6c; margin-left: 30px">删除</el-button>
@@ -68,7 +68,7 @@ import { ElMessage } from 'element-plus'
 import type { SemesterItem } from '@/types'
 import { useRouter } from 'vue-router'
 import GardeForm from './components/GardeForm.vue'
-import { Edit, Tickets, Delete } from '@element-plus/icons-vue'
+import { Edit, Tickets, Delete, InfoFilled } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const departmentStore = useDepartmentStore()
@@ -168,6 +168,7 @@ const handleDelete = async (data: { id: number | string }) => {
 }
 
 const toCategoryInfo = (id: string, name: string) => {
+  // TODO 暂时因为路由权限问题做不了
   router.push({
     path: '/semester/semesterObjectives/categoryObjectives',
     query: {

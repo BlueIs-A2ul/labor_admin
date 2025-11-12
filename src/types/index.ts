@@ -17,3 +17,17 @@ export interface SemesterItem {
   majorId: string
   semesterName: string
 }
+
+export interface SemesterDataItem {
+  createBy: string
+  departmentId: number | null
+  end: string
+  gmtCreate: string
+  gmtModified: string
+  grade: number | null
+  id: string
+  isDeleted: number
+  semesterName: string
+  start: string
+  updateBy: string | null
+}
