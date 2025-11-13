@@ -1,6 +1,182 @@
 <template>
-  <div class="index">
-    <h1>index 页面</h1>
+  <div class="app-container">
+    <div v-if="$route.meta.showFather">
+      <div class="toolBar">
+        <div id="searchBar">
+          <div id="keyWords">
+            <span style="width: 30%">课程名:&nbsp;</span>
+            <el-input v-model="keyWords" style="
+                margin-left: -0rem;
+                width: 180px;
+                display: flex;
+                align-items: center;
+              " placeholder="需要查询的课程" />
+          </div>
+        </div>
+
+        <div v-if="userPermissions.includes('*')" style="width: 400px">
+          <span style="color: #5a5e66; width: 30%">限制学院:&nbsp;</span>
+          <el-select multiple :multiple-limit="5" v-model="departmentLimit" style="width: 80%" collapse-tags filterable
+            clearable placeholder="选择学院" @change="handleChosenDepartmentChange">
+            <el-option v-for="item in selectDepartment" :key="item.value" :label="item.text" :value="item.value" />
+          </el-select>
+        </div>
+        <div v-permission="['user.student.get']" class="searchSemester">
+          查看:
+          <el-select v-model="chosenSemester" placeholder="选择学期查看数据" size="small" @change="chooseNewSemester">
+            <el-option-group v-for="(group, index) in semesterList" :key="index" :label="group.label">
+              <el-option v-for="(item, index) in group.options" :key="index" :label="item.label" :value="item.value" />
+            </el-option-group>
+          </el-select>
+        </div>
+        <div id="buttons">
+          <el-button @click="reset">重置</el-button>
+          <el-button v-debounce type="primary" @click="search">搜索</el-button>
+        </div>
+        <div class="guideButtons" style="display: flex; justify-content: space-around">
+          <el-button v-permission="['curriculum.course.add']" v-debounce type="primary" :icon="CirclePlus"
+            @click="openAddLesson">新增课程</el-button>
+        </div>
+      </div>
+
+      <div id="main" v-loading="loading">
+        <div id="roleTable">
+          <el-table id="mainArea" :row-style="{ minHeight: 50 + 'px', height: 'auto' }"
+            :cell-style="{ padding: 8 + 'px' }" :data="showLessons" stripe height="100%" style="width: 100%"
+            @filter-change="filterChange">
+            <el-table-column label="序号" min-width="40" align="center">
+              <template #default="scope">
+                <div>
+                  {{ scope.$index + 1 }}
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="title" label="课程名称" min-width="120" align="center" />
+            <el-table-column prop="courseCategory" label="分类" min-width="60" align="center" :filter-multiple="false"
+              column-key="chosenCategory" :filters="[
+                { text: '日常生活劳动', value: '日常生活劳动' },
+                { text: '公益服务劳动', value: '公益服务劳动' },
+                { text: '生产顶岗劳动', value: '生产顶岗劳动' },
+                { text: '劳动理论学习', value: '劳动理论学习' },
+                { text: '其他方式劳动', value: '其他方式劳动' },
+              ]" />
+            <el-table-column label="限制学院" width="100" align="center">
+              <template #default="scope">
+                <el-popover v-if="
+                  scope.row.departmentLimit &&
+                  scope.row.departmentLimit.length
+                " placement="top-start" title="以下学院可参加课程" width="300" trigger="click"
+                  :content="scope.row.departmentLimit.join('、')">
+                  <template #reference>
+                    <el-button>查看</el-button>
+                  </template>
+                </el-popover>
+                <span v-else>暂无</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="限制年级" width="100" align="center">
+              <template #default="scope">
+                <el-popover v-if="scope.row.gradeLimit && scope.row.gradeLimit.length" placement="top-start"
+                  title="以下年级可参加课程" width="300" trigger="click" :content="scope.row.gradeLimit.join('、')">
+                  <template #reference>
+                    <el-button>查看</el-button>
+                  </template>
+                </el-popover>
+                <span v-else>暂无</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" align="center" min-width="40" column-key="status" :filter-multiple="false"
+              :filters="[
+                { text: '筹备中', value: 1 },
+                { text: '报名中', value: 2 },
+                { text: '审核中', value: 5 },
+                { text: '进行中', value: 3 },
+                { text: '已结束', value: 4 },
+              ]">
+              <template #default="scope">
+                <el-tag v-if="scope.row.state == 1" type="warning">筹备中</el-tag>
+                <el-tag v-else-if="scope.row.state == 2" type="primary">报名中</el-tag>
+                <el-tag v-else-if="scope.row.state == 3" type="success">进行中</el-tag>
+                <el-tag v-else-if="scope.row.state == 4" type="info">已结束</el-tag>
+                <el-tag v-else-if="scope.row.state == 5" type="danger">审核中</el-tag>
+                <el-tag v-else type="danger">未知状态</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="二课分数" prop="score" align="center" width="80" />
+            <el-table-column label="主办单位" prop="organizer" align="center" />
+            <el-table-column label="承办单位" prop="undertaker" align="center" />
+            <el-table-column v-permission="[
+              'curriculum.course',
+              'curriculum.course.add',
+              'curriculum.course.update',
+              'curriculum.course.delete',
+            ]" label="操作" prop="id" min-width="120" align="center">
+              <!-- v-if权限 -->
+              <template #default="scope">
+                <div class="tools">
+                  <template v-if="scope.row.state !== 4">
+                    <el-button v-if="
+                      scope.row.numberLimit > scope.row.passCount ||
+                      scope.row.numberLimit == 0
+                    " v-permission="[
+                      'curriculum.signUp.get',
+                      'curriculum.signUp.add',
+                      'curriculum.signUp.update',
+                      'curriculum.signUp.delete',
+                    ]" :disabled="scope.row.state > 3" v-debounce type="text" style="color: #e6a23c"
+                      @click="examine(scope.row.id)" icon="el-icon-s-check">
+                      审核
+                    </el-button>
+                    <el-button v-else v-permission="[
+                      'curriculum.signUp.get',
+                      'curriculum.signUp.add',
+                      'curriculum.signUp.update',
+                      'curriculum.signUp.delete',
+                    ]" v-debounce type="text" style="color: #ff2727" icon="el-icon-s-check" :disabled="true">
+                      满员
+                    </el-button>
+                  </template>
+                  <template v-if="scope.row.state <= 2">
+                    <el-button v-permission="['curriculum.course.update']" v-debounce type="text" style="color: #409eff"
+                      icon="el-icon-edit-outline" @click="openUpdateLesson(scope.row)">
+                      编辑
+                    </el-button>
+                    <el-button v-permission="['curriculum.course.delete']" v-debounce :disabled="scope.row.state > 2"
+                      style="color: #f56c6c" type="text" icon="el-icon-delete" @click="delLesson(scope.row.id)">
+                      删除
+                    </el-button>
+                  </template>
+                </div>
+                <!-- <span v-else>只能操作当前账号创建的课程</span> -->
+              </template>
+            </el-table-column>
+
+            <el-table-column label="详细信息" prop="id" width="120" align="center" v-permission="['router.coursesManage']">
+              <template #default="scope">
+                <el-icon class="detailTag" style="font-size: 21px" size="large"
+                  @click="seeDetail(scope.row.id, scope.row.state)">
+                  <Tickets />
+                </el-icon>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <div id="pageChange">
+          <el-pagination :current-page.sync="pageParams.pageNum" :page-size="pageParams.pageSize"
+            :page-sizes="[20, 30, 40]" background layout="total, sizes, prev, pager, next, jumper" :total="lessonsTotal"
+            @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+        </div>
+      </div>
+      <el-dialog id="popup" width="70%" v-permission="['curriculum.course.update', 'curriculum.course.add']"
+        :visible.sync="isOpenAddLesson" :title="!isOpenModify ? '新建劳动课程' : '修改课程信息'" top="4vh" :show-close="false"
+        @closed="clearForm" :close-on-click-modal="false" :close-on-press-escape="false">
+        <course-form ref="courseForm" :is-visible="isOpenAddLesson" :is-update="isOpenModify" :lesson-id="courseId"
+          :state="chosenCourseState" @successCourseFrom="handleAddLessonSuccess" @onClose="handleFormClose" />
+      </el-dialog>
+    </div>
+
+    <router-view v-else :key="$route.fullPath" />
   </div>
 </template>
 
@@ -16,6 +192,7 @@ import { getAllSemesters } from '@/apis/semesterAndObjectives/semester'
 import type { SemesterDataItem } from '@/types'
 import { fa, id } from 'element-plus/es/locales.mjs'
 import { useRouter } from 'vue-router'
+import { CirclePlus, Tickets } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const semesterStore = useSemesterStore()
@@ -42,7 +219,7 @@ const category = ref([
   '其他方式劳动',
   '“三下乡”社会实践',
 ])
-const chosenCategory = ref('')
+const chosenCategory = ref<string | null>('')
 const showLessons = ref<CourseItem[]>([])
 const lessonsTotal = ref(0)
 const pageTable = ref([])
@@ -105,18 +282,18 @@ const clearForm = () => {
   // TODO this.$refs.courseForm.clearFormContext();
 }
 
-const filterChange = async (value) => {
+const filterChange = async (value: {
+  chosenCategory?: string[];
+  status?: (number | string)[]
+}) => {
   const type = Object.keys(value)[0]
   if (type === 'chosenCategory') {
-    let tag = value['chosenCategory'][0]
-    tag = typeof tag === 'undefined' ? null : tag
-    if (chosenCategory.value !== tag) {
-      chosenCategory.value = tag
-    }
+    let tag = value['chosenCategory']?.[0]
+    chosenCategory.value = tag ?? null
   } else if (type === 'status') {
-    const tag = value['status'][0]
+    const tag = value['status']?.[0]
     if (chosenState.value !== tag) {
-      chosenState.value = tag
+      chosenState.value = tag as number
     }
   }
   pageParams.value.pageNum = 1
@@ -173,11 +350,18 @@ const openAddLesson = () => {
   isOpenAddLesson.value = true
   isOpenModify.value = false
 }
+// TODO 旧版本这个函数有问题的，不知道怎么能运行
+// const addLessonFunc = () => {
+//   const newLessons = ref({
+//     semester: String(semesterTime.value) + String(whichSemester.value),
+//   });
 
-const addLesson = () => {
-  const semester = String(semesterTime.value) + String(whichSemester.value)
-  let keys = Object.keys()
-}
+//   const keys = Object.keys(newLessons.value) as (keyof typeof newLessons.value)[];
+//   const filteredKeys = keys.filter(
+//     e => e !== 'attachment' && e !== 'cover' && e !== 'courseManager' && e !== 'ruleContent'
+//   );
+//   const flag = filteredKeys.some(e => !newLessons.value[e]);
+// };
 
 const seeDetail = (id: string, state: string) => {
   router.push({
