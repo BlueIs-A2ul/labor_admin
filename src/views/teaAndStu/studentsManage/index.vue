@@ -143,7 +143,7 @@
       :before-close="handleUploadClose" :close-on-click-modal="false" :close-on-press-escape="false" center
       accept="xlsx">
       <div style="display: flex; flex-direction: column; align-items: center">
-        <el-upload drag :action="uploadUrl" :show-file-list="false" :http-request="handelUpload" multiple
+        <el-upload drag :action="uploadUrl" :show-file-list="false" :http-request="handleUpload" multiple
           style="width: 22.5rem">
           <el-icon style="font-size: 80px; color: #409eff">
             <UploadFilled />
@@ -348,7 +348,7 @@ const reset = () => {
   loadList()
 }
 
-const handelUpload = async (params: { file: File }) => {
+const handleUpload = async (params: { file: File }) => {
   const res = await uploadStu(params.file)
   if (res.code === 200) {
     ElMessage.success('上传成功')

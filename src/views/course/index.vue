@@ -410,7 +410,7 @@ const loadList = async (searchAll: boolean = false) => {
   try {
     const res = await selectCoursePage({
       title: keyWords.value,
-      category: chosenCategory.value,
+      category: chosenCategory.value ?? undefined,
       pageNum: pageParams.value.pageNum,
       pageSize: pageParams.value.pageSize,
       start: null,

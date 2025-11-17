@@ -70,7 +70,7 @@ export function updateLesson(data: UpdateCourseParams) {
   })
 }
 
-export function getLessonDetail(id: string) {
+export function getLessonDetail(id: string): Promise<ResponseData> {
   return request({
     url: `${API.DETAIL}/${id}`,
     method: 'GET',
@@ -94,7 +94,7 @@ export function getStudentList(
   pageSize: string,
   passType: string,
   evaluateType: string,
-) {
+): Promise<APIResponseType> {
   return request({
     url: `${API.STUDENT}/${curriculumId}`,
     params: { pageNum, pageSize, passType, evaluateType },
