@@ -423,7 +423,6 @@ const loadList = async (searchAll: boolean = false) => {
       gradeLimit: gardeLimit.value,
     })
     if (res.code === 200) {
-      console.log(res.data)
       const { list, total } = res.data as unknown as {
         list: CourseItem[];
         total: number;

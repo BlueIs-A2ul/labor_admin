@@ -109,7 +109,7 @@ interface SemesterGroup {
 </script>
 
 <style lang="scss" scoped>
-::v-deep {
+:deep() {
   .myStatistic {
     flex: 1;
 

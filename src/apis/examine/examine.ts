@@ -73,7 +73,7 @@ export async function evaluate(params, data): Promise<ResponseData> {
  */
 export function sendSignCode(
   courseId: string,
-  code: string,
+  code?: string,
   time = 60 * 30,
   force = 0,
 ): Promise<ResponseData> {

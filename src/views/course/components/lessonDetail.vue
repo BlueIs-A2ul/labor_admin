@@ -1,6 +1,274 @@
 <template>
-  <div class="lessonDetail">
-    <h1>lessonDetail 页面</h1>
+  <div>
+    <div class="container" v-loading="detailLoading" v-if="!$route.meta.showEvaluate">
+      <div class="mainInfo">
+        <div class="cover rounded_rectangle">
+          <el-image :src="detail.cover.url || defaultCover" alt="活动封面" style="width: 100%; height: inherit"
+            fit="cover" />
+          <div class="mask">
+            <div class="baseInfo">
+              <div class="name_and_provider">
+                <ul style="margin: 0; padding: 0; list-style: none">
+                  <li>{{ detail.title }}</li>
+                  <li>活动联系方式: {{ detail.contact }}</li>
+                  <li>
+                    举办单位: &nbsp; {{ detail.organizer }}&nbsp;
+                    <span style="margin-left: 20px">承办单位: {{ detail.undertaker }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rightCard rounded_rectangle">
+          <div class="">
+            <ul>
+              <li>
+                <h3>二课分类:</h3>
+              </li>
+              <li>
+                <span>{{ detail.courseCategory }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="">
+            <ul>
+              <li>
+                <h3>名额限制:</h3>
+              </li>
+              <li>
+                <span style="color: red">{{ detail.numberLimit }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="">
+            <ul>
+              <li>
+                <h3>学期:</h3>
+              </li>
+              <li>
+                <span>{{ detail.semester }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="">
+            <ul>
+              <li>
+                <h3>报名时间:</h3>
+              </li>
+              <li>
+                <span style="font-size: 0.6em">{{ detail.applicationStart }} ~
+                  {{ detail.applicationEnd }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="">
+            <ul>
+              <li>
+                <h3>活动时间:</h3>
+              </li>
+              <li>
+                <span style="font-size: 0.6em">{{ detail.hostingStart }} ~ {{ detail.hostingEnd }}</span>
+              </li>
+            </ul>
+          </div>
+          <div class="">
+            <ul>
+              <li>
+                <h3>操作:</h3>
+              </li>
+              <li>
+                <span style="font-size: 0.5em">
+                  <el-button v-permission="['evaluatePage']" v-debounce type="primary"
+                    @click="openEvaluateDrawer">教师考评</el-button>
+                  <!--            todo-->
+                  <el-button v-permission="[
+                    'curriculum.course.add',
+                    'curriculum.course.update',
+                  ]" v-debounce type="success" :disabled="detail.state > 3"
+                    @click="dialogVisible = true">导入名单</el-button>
+                  <!--  由于移动端扫码需要https而现在没有, 所以只能先把扫码功能搁置了, 后面https域名下来了再开启扫码功能
+                        <el-button type="warning" :disabled="status<=2" @click="createQRCode">签到二维码</el-button>
+                    -->
+                  <el-button v-permission="[
+                    'curriculum.signUp',
+                    'curriculum.signUp.update',
+                  ]" :disabled="detail.state < 2" type="warning" @click="createSignCode">签到指令码</el-button>
+                  <el-button v-permission="[
+                    'curriculum.course.student',
+                    'curriculum.course.student.get',
+                  ]" type="warning" v-if="detail.state > 3" @click="openEditStageForm">导出结果</el-button>
+                </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="detailInfo">
+        <div class="rounded_rectangle card">
+          <div style="font-weight: bolder; margin-left: 20px">详细信息</div>
+          <el-tooltip class="item" effect="light" :disabled="toolTipDisabled" placement="top-start">
+            <div slot="content" class="texts" style="width: 300px; height: auto">
+              {{ detail.introduction }}
+            </div>
+            <div @mouseover="isEllipsis" @mouseleave="checkToolTip" style="padding: 10px 10px 10px 20px">
+              <div ref="detailInfo" class="texts texts_ellipsis">
+                {{ detail.introduction }}
+              </div>
+            </div>
+          </el-tooltip>
+        </div>
+
+        <div class="rounded_rectangle card">
+          <div style="font-weight: bolder; margin-left: 20px">课程进度</div>
+          <div>
+            <el-progress class="progress" type="circle" :stroke-width="15" :width="130" :percentage="percentage"
+              :color="progressColor" :format="progressFormat">
+            </el-progress>
+          </div>
+        </div>
+
+        <div class="rounded_rectangle card">
+          <div style="font-weight: bolder; margin-left: 20px">加分规则</div>
+          <div style="padding: 10px 10px 10px 20px">
+            <div class="texts">{{ detail.scoringStandards }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="detailInfo">
+        <div class="rounded_rectangle card" style="
+            width: 32%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          ">
+          <courseStatistics :course-id="courseId" :type="1" title="自我评价"></courseStatistics>
+        </div>
+        <div class="rounded_rectangle card" style="
+            width: 32%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          ">
+          <courseStatistics :course-id="courseId" :type="0" title="课程评价"></courseStatistics>
+        </div>
+        <div class="rounded_rectangle card" style="
+            width: 32%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          ">
+          <courseStatistics :course-id="courseId" :type="2" title="教师考评"></courseStatistics>
+        </div>
+      </div>
+
+      <div class="participantsInfo">
+        <div class="comments rounded_rectangle" v-loading="commentsLoading">
+          <div class="comments_guide">
+            <div>课程评价</div>
+          </div>
+          <comments-list :id="courseId" />
+        </div>
+        <div class="stuList rounded_rectangle" v-permission="['curriculum.course.student']">
+          <div class="list_name">
+            <i class="el-icon-user-solid" style="margin-right: 10px"></i>
+            报名列表
+          </div>
+          <div style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              height: 100%;
+            ">
+            <el-table v-loading="stuTableLoad" :data="stuList" stripe height="100%" size="medium" style="width: 100%">
+              <el-table-column prop="studentId" label="学号" align="center" min-width="160">
+              </el-table-column>
+              <el-table-column prop="name" label="姓名" align="center" min-width="175">
+              </el-table-column>
+            </el-table>
+            <div style="height: 10%; display: flex; align-items: center">
+              <el-pagination small @current-change="handleCurrentChange" :current-page.sync="page.currentPage"
+                :page-size="page.pageSize" layout="total, prev, pager, next, jumper" :total="stuTotal">
+              </el-pagination>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <el-dialog class="qrDialog" title="学生名单上传" :visible.sync="dialogVisible" :close-on-click-modal="false"
+        :close-on-press-escape="false" width="30%" :before-close="handleClose" center>
+        <div style="display: flex; flex-direction: column; align-items: center">
+          <el-upload drag :action="uploadUrl" :before-upload="handleUpload" multiple>
+            <i class="el-icon-upload"></i>
+            <div class="el-upload__text">
+              将文件拖到此处，或<em>点击上传</em>
+            </div>
+            <div class="el-upload__tip" style="font-size: 15px" slot="tip">
+              学生信息应包括: <strong>学号、学生姓名</strong>
+            </div>
+            <div class="el-upload__tip" style="color: red; margin-top: 10px" slot="tip">
+              只能上传jpg/png文件, 且不超过500kb
+            </div>
+          </el-upload>
+          <span slot="footer" class="dialog-footer" style="
+              width: 150px;
+              margin-top: 60px;
+              display: flex;
+              justify-content: space-between;
+            ">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button v-debounce type="success" @click="dialogVisible = false">确定</el-button>
+          </span>
+        </div>
+      </el-dialog>
+
+      <el-dialog v-if="false" class="qrDialog" :append-to-body="true" title="签到二维码" :close-on-click-modal="false"
+        :close-on-press-escape="false" width="25%" :visible.sync="QRDialogVisible">
+        <div class="qrBox">
+          <div class="qrInfo" v-loading="qrLoading">
+            <vue-qr ref="qrCode" :text="qrText" :correctLevel="3" backgroundColor="white" colorLight="white"
+              colorDark="black" :logoSrc="defaultQRLogo" :logoMargin="5" :size="200" />
+            <div style="color: red">本次有效期30分钟, 请及时使用</div>
+          </div>
+          <div class="qrTools">
+            <el-button v-debounce @click="downloadQr"> 下载二维码 </el-button>
+            <el-button v-debounce @click="refreshQRCode" type="success">
+              刷新二维码
+            </el-button>
+            <el-button type="danger" @click="QRDialogVisible = false">
+              取消
+            </el-button>
+          </div>
+        </div>
+      </el-dialog>
+
+      <el-dialog class="qrDialog" :append-to-body="true" title="签到指令码" v-loading="qrLoading" width="25%"
+        :close-on-click-modal="false" :close-on-press-escape="false" :visible.sync="signCodeVisible">
+        <div class="qrBox">
+          <div class="qrInfo" v-loading="qrLoading">
+            <div class="signCode">{{ signCode }}</div>
+            <div style="color: red">
+              本次有效期30分钟, 且15分钟内不可重复生成, 请及时使用
+            </div>
+            <el-statistic ref="statistic" format="mm:ss" :value="deadline" time-indices>
+              <template slot="suffix">后签到码失效</template>
+            </el-statistic>
+          </div>
+          <div class="qrTools">
+            <el-button @click="refreshCode" :disabled="detail.state > 2 && codeChangeDisabled" type="success">
+              刷新签到码
+            </el-button>
+            <el-button type="danger" @click="signCodeVisible = false">
+              关闭
+            </el-button>
+          </div>
+        </div>
+      </el-dialog>
+      <stage-form v-if="detail.state == 4" :is-open="isOpenEditStageForm" :course-id="courseId"
+        :course-name="detail.title" @onClose="handleStageFormClose" />
+    </div>
+    <router-view v-else />
   </div>
 </template>
 
@@ -11,6 +279,7 @@ import { getLessonDetail, getStudentList, uploadUserToCourse } from '@/apis/less
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { uploadUrlInLessonDetail as uploadUrl } from '@/apis/common'
 
 const route = useRoute()
 const router = useRouter()
@@ -46,32 +315,37 @@ const qrTextCopy = reactive<{
 })
 
 const detail = reactive({
-  cover: "",
+  semester: '',
+  cover: {
+    url: '',
+    height: 0,
+    width: 0,
+  },
   id: null,
-  title: "",
+  title: '',
   semesterId: null,
   numberLimit: null,
   courseManager: null,
-  courseLocation: "",
-  applicationStart: "",
-  applicationEnd: "",
-  hostingEnd: "",
-  hostingStart: "",
-  courseCategory: "",
-  pointsRules: "",
-  ruleContent: "",
-  scoringStandards: "",
-  organizer: "",
-  undertaker: "",
-  introduction: "",
-  contact: "",
-  attachment: "",
+  courseLocation: '',
+  applicationStart: '',
+  applicationEnd: '',
+  hostingEnd: '',
+  hostingStart: '',
+  courseCategory: '',
+  pointsRules: '',
+  ruleContent: '',
+  scoringStandards: '',
+  organizer: '',
+  undertaker: '',
+  introduction: '',
+  contact: '',
+  attachment: '',
   state: -1,
   dimensionalityInfo: [],
   score: 0,
 })
 
-const stuList = ref([])
+const stuList = ref<Student[]>([])
 const stuTotal = ref(0)
 const stuTableLoad = ref(false)
 const state = ref<string | null>(null)
@@ -99,8 +373,8 @@ const statusInit = async () => {
   try {
     courseId.value = String(route.query.id)
   }
-  catch (error) {
-    console.log(error)
+  catch (_) {
+    ElMessage.error('')
   }
   qrTextCopy.courseId = courseId.value
   switch (status.value) {
@@ -140,17 +414,28 @@ const loadLessonDetail = async () => {
   try {
     const res = await getLessonDetail(courseId.value ?? '')
     if (res.code === 200) {
-      console.log(res.data)
       Object.assign(detail, res.data)
       if (detail.cover) {
         if (typeof detail.cover === 'string') {
+          // 如果cover返回一个字符串
           try {
             detail.cover = JSON.parse(detail.cover)
           } catch (e) {
             ElMessage.error('解析失败')
+            // 设置默认值
             detail.cover = {
-              url: defaultCover.value
+              url: defaultCover.value,
+              width: 0,
+              height: 0
             }
+          }
+        }
+
+        if (typeof detail.cover === 'object' && detail.cover !== null) {
+          detail.cover = {
+            url: detail.cover.url || defaultCover.value,
+            width: detail.cover.width || 0,
+            height: detail.cover.height || 0
           }
         }
 
@@ -159,7 +444,9 @@ const loadLessonDetail = async () => {
         }
       } else {
         detail.cover = {
-          url: defaultCover.value
+          url: defaultCover.value,
+          height: 0,
+          width: 0
         }
       }
     } else {
@@ -182,8 +469,7 @@ const loadStuList = async () => {
       '-2',
     )
     if (res.code === 200) {
-      console.log(res.data)
-      const { list, total } = res.data
+      const { list, total } = res.data as { list: Student[]; total: string }
       stuList.value = list
       stuTotal.value = Number(total)
     } else {
@@ -414,9 +700,9 @@ const getSignCodeDisabledStatus = async () => {
     // 没有找到本地存储记录，尝试向服务器发送请求创建新的签到码
     try {
       // 发送签到码请求，并传递课程ID和空字符串作为参数
-      const res = await sendSignCode(String(route.query.id), '')
-      const { data } = res
-      console.log(data)
+      const res = await sendSignCode(String(route.query.id))
+      const { data } = res as unknown as { data: { time: number } }
+      console.log('getSignCodeDisabledStatus', data)
 
       // 如果返回的时间大于0，则处理签到码相关信息
       if (data.time > 0) {
@@ -458,6 +744,7 @@ const getSignCodeDisabledStatus = async () => {
       }
     } catch (_) {
       // 请求失败提示错误消息
+      console.log('getSignCodeDisabledStatus', _)
       ElMessage.error('创建签到码失败')
     }
   }
@@ -498,6 +785,39 @@ const setSignCodeDisabledStatus = (status: boolean, deadline: number, code: stri
     `signCode?courseid=${route.query.id}`,
     JSON.stringify(obj),
   )
+}
+
+interface Contact {
+  QQ: string;
+  微信: string;
+  电话: string;
+  邮箱: string;
+}
+
+interface Student {
+  avatar: string;
+  userId: string;
+  studentId: string;
+  name: string;
+  pass: number;
+  evaluate: number;
+  department: string;
+  major: string;
+  points: string | null;
+  campus: string;
+  currentGrade: string;
+  sex: number;
+  enrollmentYear: string;
+  contact: Contact;
+}
+
+interface StudentListResponse {
+  selfEvaluateCount: string;
+  total: string;
+  evaluateCount: string;
+  list: Student[];
+  signUpCount: string;
+  passCount: string;
 }
 </script>
 
@@ -757,7 +1077,7 @@ ul {
       letter-spacing: 5px;
     }
 
-    ::v-deep {
+    :deep() {
       .el-statistic .con {
         font-size: 20px;
         display: flex;

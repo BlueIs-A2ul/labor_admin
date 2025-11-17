@@ -4,6 +4,7 @@ import request from '@/utils/request'
 export type ClearableObject = Record<string, any>
 
 export const uploadUrl = import.meta.env.VITE_VUE_APP_BASE_API + '/user/file/upload'
+export const uploadUrlInLessonDetail = import.meta.env.VITE_VUE_APP_BASE_API + '/data/file/upload'
 
 /**
  * 递归清空对象的value
