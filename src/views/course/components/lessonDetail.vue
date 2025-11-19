@@ -168,7 +168,7 @@
           <div class="comments_guide">
             <div>课程评价</div>
           </div>
-          <comments-list :id="courseId" />
+          <CommentList :id="courseId ?? ''" />
         </div>
         <div class="stuList rounded_rectangle" v-permission="['curriculum.course.student']">
           <div class="list_name">
@@ -281,6 +281,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { uploadUrlInLessonDetail as uploadUrl } from '@/apis/common'
 import CourseStatistics from './CourseStatistics.vue'
+import CommentList from '@/components/comments/CommentList.vue'
 
 const route = useRoute()
 const router = useRouter()

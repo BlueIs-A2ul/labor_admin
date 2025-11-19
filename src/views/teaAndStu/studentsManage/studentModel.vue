@@ -270,7 +270,6 @@ const close = () => {
 }
 
 const handleCreate = async () => {
-  // TODO 中间强制类型转换可能存在问题
   const res = await addStudent(studentInfo.value as unknown as AddStudentParams)
   if (res.code === 200) {
     ElMessage.success('添加成功')
