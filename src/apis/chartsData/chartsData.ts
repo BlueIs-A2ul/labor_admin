@@ -162,14 +162,18 @@ export function getRankChart(
  * @param {number} params interval 分段区间长度
  * @returns
  */
-export function statisticalScore(courseId: number, type: number, params: { interval: number }) {
+export function statisticalScore(
+  courseId: number,
+  type: number,
+  params?: { interval: number },
+): Promise<APIResponse> {
   //TODO 这里有修改
   //return request.get(`${API.COURSE_SCORE}/${courseId}/${type}`, { params })
   return request({
     url: `${API.COURSE_SCORE}/${courseId}/${type}`,
     method: 'GET',
     params: {
-      interval: params.interval,
+      interval: params?.interval,
     },
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',

@@ -143,7 +143,7 @@
             justify-content: center;
             align-items: center;
           ">
-          <courseStatistics :course-id="courseId" :type="1" title="自我评价"></courseStatistics>
+          <CourseStatistics :courseId="courseId || ''" :type="1" title="自我评价"></CourseStatistics>
         </div>
         <div class="rounded_rectangle card" style="
             width: 32%;
@@ -151,7 +151,7 @@
             justify-content: center;
             align-items: center;
           ">
-          <courseStatistics :course-id="courseId" :type="0" title="课程评价"></courseStatistics>
+          <CourseStatistics :courseId="courseId || ''" :type="0" title="课程评价"></CourseStatistics>
         </div>
         <div class="rounded_rectangle card" style="
             width: 32%;
@@ -159,7 +159,7 @@
             justify-content: center;
             align-items: center;
           ">
-          <courseStatistics :course-id="courseId" :type="2" title="教师考评"></courseStatistics>
+          <CourseStatistics :courseId="courseId || ''" :type="2" title="教师考评"></CourseStatistics>
         </div>
       </div>
 
@@ -280,6 +280,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { uploadUrlInLessonDetail as uploadUrl } from '@/apis/common'
+import CourseStatistics from './CourseStatistics.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -380,27 +381,27 @@ const statusInit = async () => {
   switch (status.value) {
     case 1:
       percentage.value = 25
-      progressColor.value = "#69e7ee"
+      progressColor.value = '#69e7ee'
       state.value = '筹备中'
       progressStatus.value = null
       break
     case 2:
       percentage.value = 50
-      progressColor.value = "#e6a23c"
-      state.value = "报名中"
-      progressStatus.value = "warning"
+      progressColor.value = '#e6a23c'
+      state.value = '报名中'
+      progressStatus.value = 'warning'
       break
     case 3:
       percentage.value = 75
-      progressColor.value = "#13ce66"
-      state.value = "进行中"
-      progressStatus.value = "success"
+      progressColor.value = '#13ce66'
+      state.value = '进行中'
+      progressStatus.value = 'success'
       break
     default:
       percentage.value = 100
-      progressColor.value = "#f56969"
-      state.value = "已结束"
-      progressStatus.value = "exception"
+      progressColor.value = '#f56969'
+      state.value = '已结束'
+      progressStatus.value = 'exception'
       break
   }
   if (courseId.value) {
@@ -701,7 +702,7 @@ const getSignCodeDisabledStatus = async () => {
     try {
       // 发送签到码请求，并传递课程ID和空字符串作为参数
       const res = await sendSignCode(String(route.query.id))
-      const { data } = res as unknown as { data: { time: number } }
+      const { data } = res as unknown as { data: { time: number, code?: string } }
       console.log('getSignCodeDisabledStatus', data)
 
       // 如果返回的时间大于0，则处理签到码相关信息
@@ -846,6 +847,7 @@ ul {
   overflow: hidden;
   max-height: 250px;
   -webkit-line-clamp: 9;
+  line-clamp: 9;
   text-overflow: ellipsis;
 }
 
